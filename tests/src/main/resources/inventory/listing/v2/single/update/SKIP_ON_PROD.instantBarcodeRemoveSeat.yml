@@ -1,0 +1,91 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: Create 2 instant barcode tickets + PP. Delete 1 qty
+type: java
+id: tdcBarcodeTicketDelete1
+class: com.stubhub.test.inventory.RandomNumberGenerator
+method: generateRandomBarcodeForTDC
+---
+type: java
+id: tdcBarcodeTicketDelete2
+class: com.stubhub.test.inventory.RandomNumberGenerator
+method: generateRandomBarcodeForTDC
+---
+type: java
+id: tdcBarcodeTicketDelete3
+class: com.stubhub.test.inventory.RandomNumberGenerator
+method: generateRandomBarcodeForTDC
+---
+id: InstantBarcodeRemoveSeat
+request:
+ uri: /inventory/listings/v2
+ method: POST
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+ body:
+   eventId: '{static:testCreateTDCBarcodeEvent:java}'
+   pricePerProduct:
+     amount: 19.0
+     currency: USD
+   section: '{static:randomNum:java}'
+   deliveryOption: BARCODE
+   products:
+     - row: R3
+       seat: S1
+       fulfillmentArtifact: '{tdcBarcodeTicketDelete1:java}'
+       productType: ticket
+     - row: R3
+       seat: S2
+       fulfillmentArtifact: '{tdcBarcodeTicketDelete2:java}'
+       productType: ticket
+     - row: R3
+       seat: S3
+       fulfillmentArtifact: '{tdcBarcodeTicketDelete3:java}'
+       productType: parking_pass
+
+response:
+ code: 200
+ status: ACTIVE
+---
+comment: "Update Listing - status"
+request:
+ uri: /inventory/listings/v2/{InstantBarcodeRemoveSeat:response.body.id}
+ method: PUT
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+ body:
+   quantity: 1
+response:
+ code: 200
+ status: ACTIVE
+ id: '{InstantBarcodeRemoveSeat:response.body.id}'
+---
+comment: "Get Listing - Status"
+request:
+ uri: /inventory/listings/v2/{InstantBarcodeRemoveSeat:response.body.id}
+ method: GET
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+ code: 200
+ status: ACTIVE
+ id: '{InstantBarcodeRemoveSeat:response.body.id}'
+ quantity: 1
+ quantityRemain: 1
+ ticketTraits:
+  0:
+    id: 102
+    name: Parking pass
+    type: Ticket Feature

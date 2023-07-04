@@ -1,0 +1,67 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: Create Flash listing
+comment: "create listing - flash"
+id: flashListing
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:flashEvent:java}'
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    deliveryOption: FLASHSEAT
+    products:
+        row: R1
+        seat: S1
+response:
+  code: 200
+  status: PENDING | ACTIVE
+  deliveryOption: FLASHSEAT
+---
+type: java
+verbose: true
+class: java.lang.Thread
+method: sleep
+parameters: 2000
+---
+comment: "create listing - flash with member IDs"
+id: flashListingWithMemberIDs
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:flashEvent:java}'
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    deliveryOption: FLASHSEAT
+    products:
+      - row: R2
+        seat: S2
+        fulfillmentArtifact: 123
+      - row: R2
+        seat: S3  
+        fulfillmentArtifact: 456
+response:
+  code: 200
+  status: PENDING | ACTIVE
+  deliveryOption: FLASHSEAT

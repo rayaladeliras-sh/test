@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ehcache xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ehcache.org/ehcache.xsd" updateCheck="false">
+
+	<defaultCache maxEntriesLocalHeap="1000" eternal="false"
+		overflowToDisk="false" timeToIdleSeconds="7200" timeToLiveSeconds="7200"
+		statistics="true">
+	</defaultCache>
+
+    <cache name="eventV3Cache"
+           maxEntriesLocalHeap="1000"
+           overflowToOffHeap="false"
+           timeToIdleSeconds="3600"
+           timeToLiveSeconds="3600"
+           eternal="false"
+           statistics="true"
+           overflowToDisk="false"
+           memoryStoreEvictionPolicy="LFU">
+    </cache>
+    <cache name="venueConfigByEventIdCache"
+           maxEntriesLocalHeap="1000"
+           overflowToOffHeap="false"
+           timeToIdleSeconds="3600"
+           timeToLiveSeconds="3600"
+           eternal="false"
+           statistics="true"
+           overflowToDisk="false"
+           memoryStoreEvictionPolicy="LFU">
+    </cache>
+    <cache name="localizedSectionCache"
+           maxEntriesLocalHeap="1000"
+           overflowToOffHeap="false"
+           timeToIdleSeconds="7200"
+           timeToLiveSeconds="7200"
+           eternal="false"
+           statistics="true"
+           overflowToDisk="false"
+           memoryStoreEvictionPolicy="LFU">
+    </cache>
+	<cache name="localizedZoneCache"
+           maxEntriesLocalHeap="1000"
+           overflowToOffHeap="false"
+           timeToIdleSeconds="7200"
+           timeToLiveSeconds="7200"
+           eternal="false"
+           statistics="true"
+           overflowToDisk="false"
+           memoryStoreEvictionPolicy="LFU">
+    </cache>
+
+</ehcache>

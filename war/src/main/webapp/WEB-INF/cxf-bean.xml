@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:jaxrs="http://cxf.apache.org/jaxrs"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:cxf="http://cxf.apache.org/core"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+       http://cxf.apache.org/jaxrs http://cxf.apache.org/schemas/jaxrs.xsd
+       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
+       http://cxf.apache.org/core http://cxf.apache.org/schemas/core.xsd 
+       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+
+    <bean id="contextPropagationOutInterceptor"
+		class="com.stubhub.platform.utilities.webservice.interceptor.out.ContextPropagationOutInterceptor"/>
+
+    <!-- <bean id="shServiceContextOutInterceptor"
+		class="com.stubhub.domain.infrastructure.soa.client.context.SHServiceContextOutInterceptor"/> -->
+		
+    <bean id="i18nServiceContextPropagationOutInterceptor" class="com.stubhub.domain.i18n.infra.soa.client.context.I18nServiceContextOutInterceptor" />
+
+    <cxf:bus>
+        <cxf:outInterceptors>
+            <ref bean="contextPropagationOutInterceptor"/>
+            <!-- <ref bean="shServiceContextOutInterceptor"/> -->
+            <ref bean="i18nServiceContextPropagationOutInterceptor" />
+        </cxf:outInterceptors>
+    </cxf:bus>
+    
+    
+
+    <jaxrs:server id="listingsContainerV2" address="/listings/v2" staticSubresourceResolution="true">
+        <jaxrs:serviceBeans>
+            <ref bean="listingServiceV2"/>
+            <ref bean="bulkListing"/>
+        </jaxrs:serviceBeans>
+        <jaxrs:extensionMappings>
+            <entry key="xml" value="application/xml"/>
+            <entry key="json" value="application/json"/>
+        </jaxrs:extensionMappings>
+        <jaxrs:providers>
+            <bean class="com.stubhub.domain.infrastructure.soa.server.context.SHServiceContextProvider"/>
+            <bean class="com.stubhub.domain.i18n.infra.soa.server.context.I18nServiceContextProvider" />
+
+            <ref bean="jsonProvider"/>
+            <!-- ref bean="inventoryResponseHandler"/ -->
+            <!-- Exception handlers to provide wrong requests hint -->
+            <bean class="org.apache.cxf.jaxrs.impl.WebApplicationExceptionMapper">
+                <property name="printStackTrace">
+                    <value type="boolean">true</value>
+                </property>
+            </bean>
+            <bean class="com.stubhub.domain.inventory.listings.v2.util.SHExceptionMapper"/>
+            <bean class="org.codehaus.jackson.jaxrs.JsonMappingExceptionMapper"/>
+            <bean class="org.codehaus.jackson.jaxrs.JsonParseExceptionMapper"/>
+           <!-- bean class="com.stubhub.domain.infrastructure.context.client.service.SHServiceContextProvider"/-->
+        </jaxrs:providers>
+        <jaxrs:inInterceptors>
+            <bean class="org.apache.cxf.jaxrs.provider.jsonp.JsonpInInterceptor"/>            
+        </jaxrs:inInterceptors>
+        <jaxrs:outInterceptors>
+        	<bean class="com.stubhub.domain.infrastructure.soa.client.context.SHDyeContextOutInterceptor"/>
+            <bean class="org.apache.cxf.jaxrs.provider.jsonp.JsonpPreStreamInterceptor"/>
+            <bean class="org.apache.cxf.jaxrs.provider.jsonp.JsonpPostStreamInterceptor"/>
+            <bean class="org.apache.cxf.transport.common.gzip.GZIPOutInterceptor"/>            
+        </jaxrs:outInterceptors>
+        <jaxrs:features>
+            <cxf:logging/>
+        </jaxrs:features>     
+    </jaxrs:server>
+    
+
+    
+    <bean id="jsonProvider" class="org.codehaus.jackson.jaxrs.JacksonJsonProvider">
+     
+        <property name="mapper">
+            <bean class="org.codehaus.jackson.map.ObjectMapper">
+                <!-- <property name="serializationConfig.dateFormat">
+                  <bean class="java.text.SimpleDateFormat">
+                    <constructor-arg value="yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"/>
+                  </bean>
+                </property> -->
+                <property name="deserializationConfig.dateFormat">
+                    <bean class="java.text.SimpleDateFormat">
+                        <constructor-arg value="yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"/>
+                    </bean>
+                </property>
+                <property name="serializationInclusion" value="NON_NULL"/>
+            </bean>
+        </property>
+    </bean>
+
+    <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+        <property name="targetObject">
+            <ref local="jsonProvider"/>
+        </property>
+        <property name="targetMethod">
+            <value>configure</value>
+        </property>
+        <property name="arguments">
+            <list>
+                <util:constant static-field="org.codehaus.jackson.map.SerializationConfig$Feature.WRAP_ROOT_VALUE"/>
+                <value type="boolean">false</value>
+            </list>
+        </property>
+    </bean>
+    <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+        <property name="targetObject">
+            <ref local="jsonProvider"/>
+        </property>
+        <property name="targetMethod">
+            <value>configure</value>
+        </property>
+        <property name="arguments">
+            <list>
+                <util:constant static-field="org.codehaus.jackson.map.DeserializationConfig$Feature.UNWRAP_ROOT_VALUE"/>
+                <value type="boolean">false</value>
+            </list>
+        </property>
+    </bean>
+    <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+        <property name="targetObject">
+            <ref local="jsonProvider"/>
+        </property>
+        <property name="targetMethod">
+            <value>configure</value>
+        </property>
+        <property name="arguments">
+            <list>
+                <util:constant static-field="org.codehaus.jackson.map.DeserializationConfig$Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY"/>
+                <value type="boolean">true</value>
+            </list>
+        </property>
+    </bean>
+    <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+        <property name="targetObject">
+            <ref local="jsonProvider"/>
+        </property>
+        <property name="targetMethod">
+            <value>configure</value>
+        </property>
+        <property name="arguments">
+            <list>
+                <util:constant static-field="org.codehaus.jackson.JsonParser$Feature.ALLOW_UNQUOTED_FIELD_NAMES"/>
+                <value type="boolean">true</value>
+            </list>
+        </property>
+    </bean>
+    <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+        <property name="targetObject">
+            <ref local="jsonProvider"/>
+        </property>
+        <property name="targetMethod">
+            <value>configure</value>
+        </property>
+        <property name="arguments">
+            <list>
+                <util:constant static-field="org.codehaus.jackson.map.DeserializationConfig$Feature.FAIL_ON_UNKNOWN_PROPERTIES"/>
+                <value type="boolean">false</value>
+            </list>
+        </property>
+    </bean>
+
+	<context:annotation-config/>
+	<bean id="bulkListingController" class="com.stubhub.domain.inventory.listings.v2.bulk.util.BulkListingJobController"/>	
+
+</beans>

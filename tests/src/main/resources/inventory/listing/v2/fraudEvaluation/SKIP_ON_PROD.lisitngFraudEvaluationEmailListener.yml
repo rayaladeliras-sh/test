@@ -1,0 +1,163 @@
+dependsOn:
+  - name: inventory/listing/v2/fraudEvaluation/SKIP_ON_PROD.updateListingFraudEvaluationListener
+---
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: updateListingFraudEvaluation
+id: prepareEvent
+include: event/create:byDateRange
+fulfillmentMethod: UPS
+countryCode: US
+startDaysFromNow: 10
+endDaysFromNow: 100
+---
+id: prepareSeller
+include: user/create:withCCAndPaypal
+ccType: Visa
+countryCode: US
+---
+id: deleteDuplicateEmailAddressUsers
+type: java
+class: com.stubhub.test.inventory.TNSFraudEvaluationProducerTest
+method: scrubUsersTableForDuplicateEmail
+parameters: 'skarnam@ebay.com'
+---
+id: updateUserEmailAddress
+type: sql
+minCount: 1
+sql: |
+  update stub.users set DEFAULT_EMAIL='skarnam@ebay.com' where ID={prepareSeller:java.id} 
+---
+id: disableFraudEvaluation
+type: java
+verbose: true
+class: "com.stubhub.test.platform.jmx.ConsoleAdapter"
+method: request
+enabled: "{EXPR:!'{ENV}'.startsWith('lvsp')}"
+parameters: 
+  - role: slx
+  - multiBlades: true
+  - action: invokeOp
+  - methodName: 'setProperty'
+  - name: 'inventoryv2-service:name=SHConfig'
+  - methodIndex: 7
+  - arg0: 'tns.listing.evaluation.new.flow.enabled'
+  - arg1: 'false'
+---
+type: sql
+comment: Disable the old lisitng flow
+verbose: true
+minCount: 1
+maxCount: 1
+sql: update system_settings set value = 'FALSE' where name in ('tns.listing.event.enabled')
+---
+id: createListing1
+include: listing/create:normal
+eventId: '{prepareEvent:java}'
+sellerEmail: '{prepareSeller:java.email}'
+sellerPassword: '{prepareSeller:java.password}'
+quantity: 2
+fulfillmentMethod: PDF
+price: '18.5'
+isGA: 'false'
+---
+type: java
+verbose: true
+class: java.lang.Thread
+method: sleep
+parameters: 100000
+---
+id: listingEmailPublish1
+type: java
+class: com.stubhub.test.inventory.ActiveMQTrigger
+method: publishToQueue
+parameters:
+  - '{ENV}'
+  - 'tns.fraud.listingeval.sendmail.queue'
+  - {listingId: '{createListing1:java}',sellerId: '{prepareSeller:java.id}',fraudCheckStatusId: '500'}
+---
+id: createListing2
+include: listing/create:normal
+eventId: '{prepareEvent:java}'
+sellerEmail: '{prepareSeller:java.email}'
+sellerPassword: '{prepareSeller:java.password}'
+quantity: 2
+fulfillmentMethod: PDF
+price: '18.5'
+isGA: 'false'
+---
+id: listingEmailPublish2
+type: java
+class: com.stubhub.test.inventory.ActiveMQTrigger
+method: publishToQueue
+parameters:
+  - '{ENV}'
+  - 'tns.fraud.listingeval.sendmail.queue'
+  - {listingId: '{createListing2:java}',sellerId: '{prepareSeller:java.id}',fraudCheckStatusId: '1000'}
+---
+type: java
+verbose: true
+class: java.lang.Thread
+method: sleep
+parameters: 30000
+---
+id: checkForRejectEmail
+type: sql
+minCount: 0
+maxCount: 1
+sql: |
+  SELECT ID FROM email_logs WHERE addr_to = (SELECT default_email FROM users WHERE id = {prepareSeller:java.id} ) AND body LIKE '%StubHub Listing ID:%{createListing2:java}%' AND STRONGMAIL_NAME LIKE 'TES_FRAUD_LISTINGS%'
+---
+id: createListing3
+include: listing/create:normal
+eventId: '{prepareEvent:java}'
+sellerEmail: '{prepareSeller:java.email}'
+sellerPassword: '{prepareSeller:java.password}'
+quantity: 2
+fulfillmentMethod: PDF
+price: '18.5'
+isGA: 'false'
+---
+id: listingEmailPublish3
+type: java
+class: com.stubhub.test.inventory.ActiveMQTrigger
+method: publishToQueue
+parameters:
+  - '{ENV}'
+  - 'tns.fraud.listingeval.sendmail.queue'
+  - {listingId: '{createListing3:java}',sellerId: '{prepareSeller:java.id}',fraudCheckStatusId: '300'}
+---
+type: java
+verbose: true
+class: java.lang.Thread
+method: sleep
+parameters: 30000
+---
+id: createListing4
+include: listing/create:normal
+eventId: '{prepareEvent:java}'
+sellerEmail: '{prepareSeller:java.email}'
+sellerPassword: '{prepareSeller:java.password}'
+quantity: 2
+fulfillmentMethod: PDF
+price: '18.5'
+isGA: 'false'
+---
+id: listingEmailPublish4
+type: java
+class: com.stubhub.test.inventory.ActiveMQTrigger
+method: publishToQueue
+parameters:
+  - '{ENV}'
+  - 'tns.fraud.listingeval.sendmail.queue'
+  - {listingId: '{createListing4:java}',sellerId: '{prepareSeller:java.id}',fraudCheckStatusId: '301'}
+---

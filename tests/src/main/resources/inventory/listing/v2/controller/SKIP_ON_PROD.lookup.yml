@@ -1,0 +1,134 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: Listing Controller - Lookup
+comment: "Listing controller"
+id: createUPSListing
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:upsEvent:java}'
+    deliveryOption: UPS
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    products:
+      row: R1
+      seat: S1
+response:
+  code: 200
+---
+id: upsLookup
+request:
+  uri: /inventory/listingcontroller/v2/?action=lookup
+  method: POST
+  headers:
+    - Cookie: '{static:getBuyercookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:getBuyertoken:response.body.login.csrf_token}'
+  body:
+    requestKey: 111
+    orderId: 123
+    buyer:
+      id: 123456
+      firstName: TestFirst
+      lastName: TestLast
+      email: buyer@test.com
+    listings:
+      - listingId: '{createUPSListing:response.body.id}'
+        quantity: 1
+        fulfillmentType: UPS
+response:
+  code: 200
+---
+sequence: new
+sequenceName: Listing Controller - Lookup1
+comment: "Listing controller"
+id: createUPSListing1
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:upsEvent:java}'
+    deliveryOption: UPS
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    products:
+      - row: R1
+        seat: S1
+      - row: R2
+        seat: S2
+response:
+  code: 200
+---
+id: upsLookup1
+request:
+  uri: /inventory/listingcontroller/v2/?action=lookup
+  method: POST
+  headers:
+    - Cookie: '{static:getBuyercookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:getBuyertoken:response.body.login.csrf_token}'
+  body:
+    requestKey: 111
+    orderId: 123
+    buyer:
+      id: 123456
+      firstName: TestFirst
+      lastName: TestLast
+      email: buyer@test.com
+    listings:
+      - listingId: '{createUPSListing1:response.body.id}'
+        quantity: 2
+        fulfillmentType: UPS
+response:
+  code: 200
+  status: AVAILABLE
+---
+type: sql
+enabled: true
+comment: updateTickeSeat
+verbose: true
+id: updateTickeSeat
+sql: Update ticket_Seat Set seat_status_id = 3 where ticket_id = ? and rownum = 1
+values:
+  - '{createUPSListing1:response.body.id}'
+---
+id: upsLookup2
+request:
+  uri: /inventory/listingcontroller/v2/?action=lookup
+  method: POST
+  headers:
+    - Cookie: '{static:getBuyercookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:getBuyertoken:response.body.login.csrf_token}'
+  body:
+    requestKey: 111
+    orderId: 123
+    buyer:
+      id: 123456
+      firstName: TestFirst
+      lastName: TestLast
+      email: buyer@test.com
+    listings:
+      - listingId: '{createUPSListing1:response.body.id}'
+        quantity: 2
+        fulfillmentType: UPS
+response:
+  code: 200
+  status: UNAVAILABLE

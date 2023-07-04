@@ -1,0 +1,57 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: Update electronic to predelivery
+id: electronicToInstant
+request:
+ uri: /inventory/listings/v2
+ method: POST
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+ body:
+   eventId: '{static:testCreatePACBarcodeEvent:java}'
+   pricePerProduct:
+     amount: 19.0
+     currency: USD
+   section: 'SEC{TIMESTAMP}'
+   deliveryOption: BARCODE
+   products:
+     - row: RR8
+       seat: SS1
+       productType: ticket
+       externalId: xyz
+response:
+ code: 200
+ status: ACTIVE
+---
+type: java
+id: pacBarcode
+class: com.stubhub.test.inventory.RandomNumberGenerator
+method: generateRandomBarcodeForPAC 
+---
+comment: "Update Listing - elect to instant"
+request:
+ uri: /inventory/listings/v2/{electronicToInstant:response.body.id}
+ method: PUT
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+ body:
+    products:
+      - externalId: xyz
+        productType: ticket
+        fulfillmentArtifact: '{pacBarcode:java}'
+        operation: UPDATE
+response:
+ code: 200
+ status: PENDING | ACTIVE
+ id: '{electronicToInstant:response.body.id}'

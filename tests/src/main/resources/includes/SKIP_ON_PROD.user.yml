@@ -1,0 +1,15 @@
+id: user
+request:
+  method: POST
+  headers:
+    - Accept: application/json
+    - Content-Type: application/json
+  uri: http://slcd000tlk002.stubcorp.com/tds/data/get?environment={ENV}&count=1&dispose=true
+  body:
+    type: User
+    filters:
+      country: US
+      sellerPayment: paypal
+      buyerPayment: creditcard
+response:
+  code: 200

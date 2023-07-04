@@ -1,0 +1,45 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: Create listing with 30 seats
+id: 30seatsListing
+request:
+ uri: /inventory/listings/v2
+ method: POST
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+ body:
+   eventId: '{static:pdfEvent:java}'
+   pricePerProduct:
+     amount: 19.0
+     currency: USD
+   quantity: 30
+   deliveryOption: PDF
+response:
+ code: 200
+ status: ACTIVE
+---
+comment: "Get Listing - Valid"
+request:
+ uri: /inventory/listings/v2/{30seatsListing:response.body.id}
+ method: GET
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+  code: 200
+  status: ACTIVE
+  id: '{30seatsListing:response.body.id}'
+  quantity: 30
+  quantityRemain: 30
+  section: General Admission
+  rows: N/A

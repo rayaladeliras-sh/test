@@ -1,0 +1,56 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: Create Instant Barcode listing with parking pass
+id: barcodeParking
+request:
+ uri: /inventory/listings/v2
+ method: POST
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+ body:
+   eventId: '{static:testCreateTMBarcodeEvent:java}'
+   pricePerProduct:
+     amount: 19.0
+     currency: USD
+   section: 'SEC{TIMESTAMP}'
+   deliveryOption: BARCODE
+   products:
+     - row: R1
+       seat: S1
+       fulfillmentArtifact: '{static:tmBarcode:java}'
+     - row: R1
+       seat: S2
+       productType: parking_pass
+       fulfillmentArtifact: '{static:tmBarcode1:java}'
+response:
+ code: 200
+ status: ACTIVE
+---
+comment: "Get Listing - Valid"
+request:
+ uri: /inventory/listings/v2/{barcodeParking:response.body.id}
+ method: GET
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+  code: 200
+  status: ACTIVE
+  id: '{barcodeParking:response.body.id}'
+  deliveryOption: BARCODE
+  preDelivered: true
+  ticketTraits:
+     0:
+       id: 102
+       name: Parking pass
+       type: Ticket Feature

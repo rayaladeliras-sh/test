@@ -1,0 +1,102 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: Update Inhand Date
+id: pdfInhand
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:pdfEvent:java}'
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section:  'SEC{TIMESTAMP}'
+    deliveryOption: PDF
+    products:
+      - row: R1
+        seat: S2
+response:
+  code: 200
+  status: ACTIVE
+---
+id: getInhandDate
+comment: "Get Listing - PDF"
+request:
+  uri: /inventory/listings/v2/{pdfInhand:response.body.id}
+  method: GET
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+  code: 200
+---
+id: inhandDate
+type: groovy
+verbose: true
+parameters: '{getInhandDate:response.body.inhandDate}'
+script: |
+ def (dateVar1,dateVar2) = (parameters.split('T'))
+ def dateVal = (new Date()).parse('yyyy-MM-dd', dateVar1)
+ def newDate = (dateVal.minus(2)).format('yyyy-MM-dd')
+ return newDate + 'T'+ dateVar2
+---
+id: inhandDate1
+type: groovy
+verbose: true
+parameters: '{getInhandDate:response.body.inhandDate}'
+script: |
+ def (dateVar1,dateVar2) = (parameters.split('T'))
+ def dateVal = (new Date()).parse('yyyy-MM-dd', dateVar1)
+ def newDate = (dateVal.plus(150)).format('yyyy-MM-dd')
+ return newDate + 'T'+ dateVar2
+---
+comment: "Updating InHand date"
+request:
+  uri: /inventory/listings/v2/{pdfInhand:response.body.id}
+  method: PUT
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    inhandDate: '{inhandDate:groovy}'
+response:
+  code: 200
+---
+comment: "Get Listing - after update inHand"
+request:
+ uri: /inventory/listings/v2/{pdfInhand:response.body.id}
+ method: GET
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+  code: 200
+  status: ACTIVE
+  id: '{pdfInhand:response.body.id}'
+  inhandDate: '{inhandDate:groovy}'
+---
+comment: "Updating InHand date - adjust in-hand date false"
+request:
+  uri: /inventory/listings/v2/{pdfInhand:response.body.id}
+  method: PUT
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    inhandDate: '{inhandDate1:groovy}'
+    adjustInhandDate: false
+response:
+  code: 400
+  description: The in hand date provided is after the latest possible in hand date or before the earliest possible in hand date for the event

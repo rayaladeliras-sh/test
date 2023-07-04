@@ -1,0 +1,94 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: Update face value
+comment: "Update Face Value"
+id: updateFaceValue
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:upsEvent:java}'
+    deliveryOption: UPS
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    faceValue:
+      amount: 19.0
+      currency: USD
+    section:  'SEC{TIMESTAMP}'
+    products:
+      row: R1
+      seat: S1
+response:
+  code: 200
+---
+comment: "Updating listing - face value"
+request:
+  uri: /inventory/listings/v2/{updateFaceValue:response.body.id}
+  method: PUT
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    faceValue:
+      amount: 20.0
+      currency: USD
+response:
+  code: 200
+---
+comment: "Get Listing - Valid"
+request:
+  uri: /inventory/listings/v2/{updateFaceValue:response.body.id}
+  method: GET
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+  code: 200
+  status: ACTIVE
+  id: '{updateFaceValue:response.body.id}'
+  faceValue:
+    amount: 20.0
+    currency: USD
+---
+comment: "Updating listing - face value old flow"
+request:
+  uri: /inventory/listings/v2/{updateFaceValue:response.body.id}
+  method: PUT
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    faceValue:
+      amount: 18.0
+      currency: USD
+    comments: test
+response:
+  code: 200
+---
+comment: "Get Listing - Valid"
+request:
+  uri: /inventory/listings/v2/{updateFaceValue:response.body.id}
+  method: GET
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+  code: 200
+  status: ACTIVE
+  id: '{updateFaceValue:response.body.id}'
+  faceValue:
+    amount: 18.0
+    currency: USD

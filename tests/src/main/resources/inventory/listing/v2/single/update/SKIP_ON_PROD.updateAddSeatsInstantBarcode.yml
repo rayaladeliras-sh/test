@@ -1,0 +1,77 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: Create Instant barcode listing with SRS
+type: java
+id: tdcInstantBarcode
+class: com.stubhub.test.inventory.RandomNumberGenerator
+method: generateRandomBarcodeForTDC
+---
+comment: "create a instant barcode listing"
+id: createInstantBarcodeTDC
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:testCreateTDCBarcodeEvent:java}'
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    products:
+        row: R1
+        seat: S1
+        fulfillmentArtifact: '{tdcInstantBarcode:java}'
+response:
+  code: 200
+  status: PENDING | ACTIVE
+---
+comment: "Get Listing - Valid"
+request:
+  uri: /inventory/listings/v2/{createInstantBarcodeTDC:response.body.id}
+  method: GET
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+  code: 200
+  status: PENDING | ACTIVE
+  id: '{createInstantBarcodeTDC:response.body.id}'
+  deliveryOption: BARCODE
+  preDelivered: true
+---
+type: java
+verbose: true
+class: java.lang.Thread
+method: sleep
+parameters: 20000
+---
+comment: "add seats to instant barcode listing"
+request:
+  uri: /inventory/listings/v2/{createInstantBarcodeTDC:response.body.id}
+  method: PUT
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+     products:
+      - row: R1
+        seat: S2
+        productType: TICKET
+response:
+  code: 400
+  id: '{createInstantBarcodeTDC:response.body.id}'
+  status: ACTIVE
+  description: Cannot add a seat for a instant barcode listing 
+  

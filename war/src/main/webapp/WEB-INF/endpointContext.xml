@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:sec="http://www.springframework.org/schema/security"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:jms="http://www.springframework.org/schema/jms"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="
+        http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.2.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+		http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-2.0.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/jms http://www.springframework.org/schema/jms/spring-jms.xsd
+	    http://www.springframework.org/schema/cache http://www.springframework.org/schema/cache/spring-cache.xsd">
+
+	<bean id="propertyPlaceholderConfigurer"
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="properties"> 
+			<bean class="com.stubhub.newplatform.property.MasterStubHubProperties"
+				factory-method="loadSystemProperties" />
+	    </property>
+	</bean>
+
+	<bean id="centralizedMbean_mine" class="com.stubhub.newplatform.common.sanitycheck.jmx.CentralizedMbean" />
+
+	<bean id="inventoryv2MBeanExporter" class="org.springframework.jmx.export.MBeanExporter"
+		lazy-init="false">
+		<property name="beans">
+			<map>
+				<!-- <entry key="inventoryv2-service:name=CentralizedMbean" value-ref="centralizedMbean" /> -->
+				<entry key="inventoryv2-service:name=CentralizedMbean" value-ref="centralizedMbean_mine" />
+			</map>
+		</property>
+		<property name="registrationBehaviorName" value="REGISTRATION_IGNORE_EXISTING" />
+	</bean>
+
+    <import resource="classpath:/inventoryDataSourceContext.xml"/>
+    <import resource="/jmsListenerContext.xml" />
+    <import resource="/kafkaProducerContext.xml" />
+    <import resource="/fraudEvaluationContext.xml" />
+	<import resource="classpath:/config/infra/sh-config.xml" />
+	
+	<bean id="shConfigMBeanExporter" class="org.springframework.jmx.export.MBeanExporter"
+       lazy-init="false">
+       <property name="beans">
+           <map>
+               <entry key="inventoryv2-service:name=SHConfig"
+                   value-ref="shConfigMBean" />
+           </map>
+       </property>
+       <property name="registrationBehaviorName" value="REGISTRATION_IGNORE_EXISTING" />
+   	</bean>
+
+    <aop:aspectj-autoproxy></aop:aspectj-autoproxy>
+    <aop:config proxy-target-class="true"/>
+    <bean class="com.stubhub.domain.inventory.listings.v2.aspects.EventLogger"/>
+	
+	<context:component-scan base-package="com.stubhub.domain.inventory.listings.v2.aspects" />
+    
+    <context:component-scan base-package="com.stubhub.newplatform.common.sanitycheck.jmx"/>
+
+	<bean id="inventoryDataSourceCheck" class="com.stubhub.newplatform.common.sanitycheck.jmx.DataSourceSanityCheck">
+		<property name="name" value="inventorydataSourceContext"/>
+		<property name="dataSource"><ref bean="inventoryDataSource"/></property> 
+	</bean>
+
+    <context:component-scan base-package="com.stubhub.common">
+        <context:exclude-filter type="regex" expression="com\.stubhub\.common\.cache\.helper\..*"/>
+    </context:component-scan>
+    <context:component-scan base-package="com.stubhub.newplatform"> 
+        <context:exclude-filter type="regex" expression="com\.stubhub\.newplatform\.common\.cache\.store\..*"/>
+    </context:component-scan>
+    <context:component-scan base-package="com.stubhub.domain.inventory"/>
+    <context:component-scan base-package="com.stubhub.domain.catalog"/>
+    <context:component-scan base-package="com.stubhub.domain.infrastructure.web.server.context"/>
+    <context:component-scan base-package="com.stubhub.domain.infrastructure.soa, 
+                      com.stubhub.platform.utilities.webservice" />
+	<context:component-scan base-package="com.stubhub.domain.infrastructure.web.client"/>
+	<context:component-scan base-package="com.stubhub.domain.i18n.infra.soa" />
+	<context:component-scan base-package="com.stubhub.domain.i18n.currencyconversion.v1.util"/>
+
+	<bean id="bulkInventoryDest" class="org.apache.activemq.command.ActiveMQQueue" autowire="constructor">
+		<constructor-arg value="queue.inventory.listings.groups" />
+	</bean>         
+	<bean id="unlockBarcodeMessageDest" class="org.apache.activemq.command.ActiveMQQueue" autowire="constructor">
+		<constructor-arg value="${listing.barcode.unlock.activemq.queueName}" />
+	</bean> 
+	<bean id="shareWithFriendsMessageDest" class="org.apache.activemq.command.ActiveMQQueue" autowire="constructor">
+		<constructor-arg value="${share.with.friends.activemq.queueName}" />
+	</bean> 
+	        
+	
+	<bean id="amqJmsFactory" class="org.apache.activemq.pool.PooledConnectionFactory" destroy-method="stop">
+	  <property name="connectionFactory">
+	    <bean class="org.apache.activemq.ActiveMQConnectionFactory">
+	      <property name="brokerURL">
+	        <value>${pro.common.activeMQ.brokerURL}</value>
+	      </property>
+	    </bean>
+	  </property>
+	</bean>
+	
+	<bean id="amqConsumersJmsFactory" class="com.stubhub.domain.infrastructure.messaging.client.activemq.SHActiveMQConnectionFactory">
+    	<constructor-arg name="producerURL" value="${pro.common.activeMQ.brokerURL}" />
+    	<constructor-arg name="consumerURL" value="${dedicated_brokernetwork_url}" />
+    	<property name="clientID" value="#{T(java.net.InetAddress).localHost.hostName}"/>
+    	<property name="clientIDPrefix" value="INVENTORY-BULK"/>
+	</bean>
+	
+    <bean id="unlockBarcodeMessageTemplate" class="org.springframework.jms.core.JmsTemplate">
+		<property name="connectionFactory">
+		  <ref local="amqJmsFactory"/>
+		</property>
+		<property name="defaultDestination">
+			<ref bean="unlockBarcodeMessageDest" />
+		</property>
+		<property name="messageTimestampEnabled" value="true" />
+		<property name="messageIdEnabled" value="true" />
+	</bean>
+	
+	<bean id="shareWithFriendsTemplate" class="org.springframework.jms.core.JmsTemplate">
+		<property name="connectionFactory">
+		  <ref local="amqJmsFactory"/>
+		</property>
+		<property name="defaultDestination">
+			<ref bean="shareWithFriendsMessageDest" />
+		</property>
+		<property name="messageTimestampEnabled" value="true" />
+		<property name="messageIdEnabled" value="true" />
+	</bean>
+
+    <bean id="bulkInventoryTemplate" class="org.springframework.jms.core.JmsTemplate">
+		<property name="connectionFactory">
+		  <ref local="amqJmsFactory"/>
+		</property>
+		<property name="defaultDestination">
+			<ref bean="bulkInventoryDest" />
+		</property>
+		<property name="messageTimestampEnabled" value="true" />
+		<property name="messageIdEnabled" value="true" />
+	</bean>
+	
+	<bean id="lmsFormMessageDest" class="org.apache.activemq.command.ActiveMQQueue"
+		autowire="constructor">
+		<constructor-arg value="lmsform_message" />
+	</bean>         
+	<bean id="lmsFormJmsFactory" class="org.apache.activemq.pool.PooledConnectionFactory" destroy-method="stop">
+	  <property name="connectionFactory">
+	    <bean class="org.apache.activemq.ActiveMQConnectionFactory">
+	      <property name="brokerURL">
+	        <value>${lmsform.activeMQ.brokerURL}</value>
+	      </property>
+	    </bean>
+	  </property>
+	</bean>
+	<bean id="lmsFormMessageTemplate" class="org.springframework.jms.core.JmsTemplate">
+		<property name="connectionFactory">
+		  <ref local="lmsFormJmsFactory"/>
+		</property>
+		<property name="defaultDestination">
+			<ref bean="lmsFormMessageDest" />
+		</property>
+		<property name="messageTimestampEnabled" value="false" />
+		<property name="messageIdEnabled" value="false" />
+		<property name="sessionTransacted" value="true" />
+	</bean>
+	
+	<bean id="lockBarcodeMessageDest" class="org.apache.activemq.command.ActiveMQQueue" autowire="constructor">
+		<constructor-arg value="${listing.barcode.lock.activemq.queueName}" />
+	</bean>         
+
+    <bean id="lockBarcodeMessageTemplate" class="org.springframework.jms.core.JmsTemplate">
+		<property name="connectionFactory">
+		  <ref local="amqJmsFactory"/>
+		</property>
+		<property name="defaultDestination">
+			<ref bean="lockBarcodeMessageDest" />
+		</property>
+		<property name="messageTimestampEnabled" value="true" />
+		<property name="messageIdEnabled" value="true" />
+	</bean>
+
+	<bean id="svcLocator" class="com.stubhub.platform.utilities.webservice.svclocator.SvcLocator" />
+
+	<bean id="objectMapper" class="org.codehaus.jackson.map.ObjectMapper"></bean>
+	<bean id="restTemplate" class="com.stubhub.domain.infrastructure.web.client.SHRestTemplate"/>
+	
+	<jms:listener-container connection-factory="amqConsumersJmsFactory"
+	        concurrency="${inventory.listings.bulk.consumer.concurrency}" container-class="com.stubhub.domain.infrastructure.messaging.client.jms.SHJMSMessageListenerContainer">
+
+	    <jms:listener id="bulkListingListener" destination="queue.inventory.listings.groups" ref="bulkListingJobConsumer" method="processGroup"/>
+	</jms:listener-container>
+	
+	<bean id="ticketFulfillmentListenerConnectionFactory" class="com.stubhub.domain.infrastructure.messaging.client.activemq.SHActiveMQConnectionFactory">
+		<constructor-arg name="producerURL" value="${common.activeMQ.brokerURL}" />
+		<constructor-arg name="consumerURL" value="${dedicated_brokernetwork_url}" />
+		<property name="clientIDPrefix" value="ff-" />
+	</bean>
+
+    <bean id="ticketFulfillmentListener" class="com.stubhub.domain.inventory.listings.v2.listeners.TicketFulfillmentStatusListener" />
+
+    <bean id="ticketFulfillmentDest" class="org.apache.activemq.command.ActiveMQQueue"
+          autowire="constructor">
+        <constructor-arg value="domain.fulfillment.inbound.status.queue" />
+    </bean>
+
+    <bean id="ticketFulfillmentJmsContainer" class="com.stubhub.domain.infrastructure.messaging.client.jms.SHJMSMessageListenerContainer">
+        <property name="connectionFactory" ref="ticketFulfillmentListenerConnectionFactory"/>
+        <property name="destination" ref="ticketFulfillmentDest"/>
+        <property name="messageListener" ref="ticketFulfillmentListener" />
+        <property name="autoStartup" value="${inventory.v2.ListenerJmsContainer.autoStartUp:true}"/>
+        <property name="concurrentConsumers" value="1" />
+    </bean>
+
+    <!-- define a chain of filters -->
+	<bean id="filterChainProxy" class="org.springframework.security.web.FilterChainProxy">
+	    <sec:filter-chain-map path-type="ant">
+	    <sec:filter-chain pattern="/**"
+	        filters="SHDyeContextFilter,ExtendedSecurityContextFilter,SHServiceContextFilter,I18nServiceContextFilter" />
+	    </sec:filter-chain-map>
+	</bean>
+
+	<!-- Changes for Autobulk SHIP Report Listener - START -->	
+	<bean id="autobulkJmsFactory" class="org.apache.activemq.pool.PooledConnectionFactory" destroy-method="stop">
+	  <property name="connectionFactory">
+	    <bean class="org.apache.activemq.ActiveMQConnectionFactory">
+	      <property name="brokerURL">
+	        <value>${autobulk.activemq.brokerURL}</value>
+	      </property>
+	      <property name="useAsyncSend" value="true"/>
+	    </bean>
+	  </property>
+	  <property name="maxConnections" value="${autobulk.ship.file.processing.producer.maxConnections}"/>	  
+	</bean> 
+	<bean id="autobulkFileProcessingMsgDest" class="org.apache.activemq.command.ActiveMQQueue" autowire="constructor">
+		<constructor-arg value="${autobulk.ship.file.processing.queue}" />
+	</bean>
+	
+    <bean id="autobulkFileProcessingMsgProducer" class="org.springframework.jms.core.JmsTemplate">
+		<property name="connectionFactory">
+		  <ref local="autobulkJmsFactory"/>
+		</property>
+		<property name="defaultDestination">
+			<ref bean="autobulkFileProcessingMsgDest" />
+		</property>
+		<property name="messageTimestampEnabled" value="true" />
+		<property name="messageIdEnabled" value="true" />
+	</bean>
+	
+    <bean id="autobulkFileReportingMsgDest" class="org.apache.activemq.command.ActiveMQQueue" autowire="constructor">
+        <constructor-arg value="${autobulk.ship.file.reporting.queue}" />
+    </bean>
+	
+	
+	<bean id="autobulkFileReportingListener" class="com.stubhub.domain.inventory.listings.v2.bulk.listeners.AutobulkFileReportingListener" />
+
+
+    <bean id="autobulkFileReportingListenerJmsContainer" class="com.stubhub.domain.infrastructure.messaging.client.jms.SHJMSMessageListenerContainer">
+        <property name="connectionFactory" ref="autobulkJmsFactory"/>
+        <property name="destination" ref="autobulkFileReportingMsgDest"/>
+        <property name="messageListener" ref="autobulkFileReportingListener" />
+        <property name="autoStartup" value="${inventory.v2.ListenerJmsContainer.autoStartUp:true}"/>
+        <property name="concurrentConsumers" value="${autobulk.ship.file.reporting.consumer.concurrency}" />
+    </bean>
+ 	<!-- Changes for Autobulk SHIP Report Listener - FINISH -->
+ 	
+	<!-- Changes for LMS Listing Lookup -->
+	<bean id="lmsLookupListingDest" class="org.apache.activemq.command.ActiveMQQueue"
+		autowire="constructor">
+		<constructor-arg value="${domain.inventory.lmslisting.lookup.queueName}" />
+	</bean>
+	
+    <bean id="lmsLookupFormMessageTemplate" class="org.springframework.jms.core.JmsTemplate">
+		<property name="connectionFactory">
+		  <ref local="amqJmsFactory"/>
+		</property>
+		<property name="defaultDestination">
+			<ref bean="lmsLookupListingDest" />
+		</property>
+		<property name="messageTimestampEnabled" value="true" />
+		<property name="messageIdEnabled" value="true" />
+	</bean>
+
+	<bean id="lmsLookupListingListener"
+		class="com.stubhub.domain.inventory.listings.v2.listeners.LMSLookupListingListener">
+	</bean>
+
+	<bean id="lmsLookupListingListenerContainer"
+		class="com.stubhub.domain.infrastructure.messaging.client.jms.SHJMSMessageListenerContainer">
+		<property name="connectionFactory"
+			ref="amqConsumersJmsFactory" />
+		<property name="destination" ref="lmsLookupListingDest" />
+		<property name="messageListener" ref="lmsLookupListingListener" />
+		<property name="sessionTransacted" value="true" />
+		<property name="concurrentConsumers" value="${domain.inventory.lmslisting.lookup.consumer.concurrency}" />
+		<property name="autoStartup" value="${inventory.v2.ListenerJmsContainer.autoStartUp:true}" />
+		<property name="sessionAcknowledgeModeName" value="CLIENT_ACKNOWLEDGE" />
+	</bean>
+
+
+     
+</beans>

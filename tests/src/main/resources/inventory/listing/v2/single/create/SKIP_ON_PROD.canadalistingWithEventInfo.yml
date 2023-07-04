@@ -1,0 +1,62 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+id: prepareCASeller
+include: user/create:withCCAndPaypal
+ccType: Visa
+countryCode: US
+---
+id: caPdfEvent
+include: event/create:byDateRange
+fulfillmentMethod: PDF
+countryCode: CA
+startDaysFromNow: 3
+endDaysFromNow: 100
+---
+maxRetries: 3
+id: gettoken
+include: stubhub.iam:web.login
+credentials:
+  username: '{prepareCASeller:java.email}'
+  password: '{prepareCASeller:java.password}'
+---
+maxRetries: 3
+id: getcookie
+include: stubhub.iam:token.init
+sessionId: '{gettoken:response.body.login.session_id}'
+---
+sequenceName: Create PDF listing
+comment: "CA create listing - PDF"
+id: caPdf
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{gettoken:response.body.login.csrf_token}'
+  body:
+    event:
+      name: Elton John
+      venue: Scotiabank Arena
+      eventLocalDate: 2019-10-23T20:00
+    deliveryOption: PDF
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    faceValue:
+      amount: 15.0
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    products:
+      row: R1
+      seat: S1
+response:
+  code: 200

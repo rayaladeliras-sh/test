@@ -1,0 +1,69 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: http
+  subDomain: api-int
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: LMS Approval
+id: addUserCC
+include: user/update:addCreditCard
+email: api_us_sell_indy20@testmail.com
+password: password
+ccType: Visa
+countryCode: US
+---
+id: addPaypal
+include: user/update:addPaypal
+email: api_us_sell_indy20@testmail.com
+password: password
+countryCode: US
+---
+comment: "create listing - LMS"
+id: lms
+request:
+  uri: /inventoryv2/listings/v2
+  method: POST
+  headers:
+    - assertion: eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiWmpsa09UVXdNekl3TUdFeFpqZ3hNelUyTkRCa01qY3dNVEkyTVRJME5UaGhNekE1TXpSa01BPT0ifQ==.eyJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC9hcGljb250ZXh0IjoiXC9vYXV0aDJcL2Fzc2VydGlvblwvdjEiLCJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC9zdWJzY3JpYmVyIjoiQXBpX1VLX3NlbGxfYnV5ZXIyMCIsImh0dHA6XC9cL3N0dWJodWIuY29tXC9jbGFpbXNcL2FwcGxpY2F0aW9uaWQiOiI1MDYiLCJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC9lbmR1c2VyaWQiOiIxMDAwMDAwMDE5IiwiaHR0cDpcL1wvc3R1Ymh1Yi5jb21cL2NsYWltc1wvZW5kdXNlclRlbmFudElkIjoiLTEyMzQiLCJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC9hcHBsaWNhdGlvbm5hbWUiOiJEZWZhdWx0QXBwbGljYXRpb24iLCJpc3MiOiJ3c28yLm9yZ1wvcHJvZHVjdHNcL2FtIiwiaHR0cDpcL1wvc3R1Ymh1Yi5jb21cL2NsYWltc1wvdG1yZWZpZCI6Im51bGwiLCJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC90aWVyIjpudWxsLCJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC9pc2d1ZXN0IjoiZmFsc2UiLCJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC91c2VydHlwZSI6IkFQUExJQ0FUSU9OX1VTRVIiLCJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC9zZXNzaW9uaWQiOiIzQzE3Q0QyMDZFNDY0OTFDOUIwMDEyQzE2ODkwQTk1MiIsImh0dHA6XC9cL3N0dWJodWIuY29tXC9jbGFpbXNcL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6XC9cL3N0dWJodWIuY29tXC9jbGFpbXNcL3ZlcnNpb24iOiJ2MSIsImh0dHA6XC9cL3N0dWJodWIuY29tXC9jbGFpbXNcL2dyYW50dHlwZSI6InBhc3N3b3JkIiwiaHR0cDpcL1wvc3R1Ymh1Yi5jb21cL2NsYWltc1wvZW5kdXNlciI6ImFwaV91c19zZWxsX2luZHkyMEB0ZXN0bWFpbC5jb20iLCJzY29wZSI6WyJkZWZhdWx0Il0sImh0dHA6XC9cL3N0dWJodWIuY29tXC9jbGFpbXNcL2tleXR5cGUiOiJQUk9EVUNUSU9OIiwiaHR0cDpcL1wvc3R1Ymh1Yi5jb21cL2NsYWltc1wvZW5kdXNlcmd1aWQiOiJDNzc5OTE1NTdBMEU1RTE0RTA0NDAwMjEyODYxQjI1NiIsImV4cCI6MTU0NDYyODE2Mn0=.FVs5WCbvqK7OAY+mgw9++O2lbxf3x9P3p8GLq7b9UwFzkLPqCu8ifU/MK/r9Uf6NkSpBv8MBZHQlN77DH134V4r9Xt8KdyoIH1rkd9DWr87V5wwTiJgaVNQtOv/o2v1Ium3aria8du+QD7458gNly6CdD8y0vrWJLjz3JP9c8HI=
+  body:
+    eventId: '{static:lmsEvent:java}'
+    deliveryOption: LMS
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    products:
+      row: 'R1{TIMESTAMP}'
+      seat: S1
+response:
+  code: 200
+---
+comment: "Get Listing - Valid"
+request:
+  uri: /inventoryv2/listings/v2/{lms:response.body.id}
+  method: GET
+  headers:
+    - assertion: eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiWmpsa09UVXdNekl3TUdFeFpqZ3hNelUyTkRCa01qY3dNVEkyTVRJME5UaGhNekE1TXpSa01BPT0ifQ==.eyJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC9hcGljb250ZXh0IjoiXC9vYXV0aDJcL2Fzc2VydGlvblwvdjEiLCJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC9zdWJzY3JpYmVyIjoiQXBpX1VLX3NlbGxfYnV5ZXIyMCIsImh0dHA6XC9cL3N0dWJodWIuY29tXC9jbGFpbXNcL2FwcGxpY2F0aW9uaWQiOiI1MDYiLCJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC9lbmR1c2VyaWQiOiIxMDAwMDAwMDE5IiwiaHR0cDpcL1wvc3R1Ymh1Yi5jb21cL2NsYWltc1wvZW5kdXNlclRlbmFudElkIjoiLTEyMzQiLCJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC9hcHBsaWNhdGlvbm5hbWUiOiJEZWZhdWx0QXBwbGljYXRpb24iLCJpc3MiOiJ3c28yLm9yZ1wvcHJvZHVjdHNcL2FtIiwiaHR0cDpcL1wvc3R1Ymh1Yi5jb21cL2NsYWltc1wvdG1yZWZpZCI6Im51bGwiLCJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC90aWVyIjpudWxsLCJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC9pc2d1ZXN0IjoiZmFsc2UiLCJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC91c2VydHlwZSI6IkFQUExJQ0FUSU9OX1VTRVIiLCJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC9zZXNzaW9uaWQiOiIzQzE3Q0QyMDZFNDY0OTFDOUIwMDEyQzE2ODkwQTk1MiIsImh0dHA6XC9cL3N0dWJodWIuY29tXC9jbGFpbXNcL2FwcGxpY2F0aW9udGllciI6IlVubGltaXRlZCIsImh0dHA6XC9cL3N0dWJodWIuY29tXC9jbGFpbXNcL3ZlcnNpb24iOiJ2MSIsImh0dHA6XC9cL3N0dWJodWIuY29tXC9jbGFpbXNcL2dyYW50dHlwZSI6InBhc3N3b3JkIiwiaHR0cDpcL1wvc3R1Ymh1Yi5jb21cL2NsYWltc1wvZW5kdXNlciI6ImFwaV91c19zZWxsX2luZHkyMEB0ZXN0bWFpbC5jb20iLCJzY29wZSI6WyJkZWZhdWx0Il0sImh0dHA6XC9cL3N0dWJodWIuY29tXC9jbGFpbXNcL2tleXR5cGUiOiJQUk9EVUNUSU9OIiwiaHR0cDpcL1wvc3R1Ymh1Yi5jb21cL2NsYWltc1wvZW5kdXNlcmd1aWQiOiJDNzc5OTE1NTdBMEU1RTE0RTA0NDAwMjEyODYxQjI1NiIsImV4cCI6MTU0NDYyODE2Mn0=.FVs5WCbvqK7OAY+mgw9++O2lbxf3x9P3p8GLq7b9UwFzkLPqCu8ifU/MK/r9Uf6NkSpBv8MBZHQlN77DH134V4r9Xt8KdyoIH1rkd9DWr87V5wwTiJgaVNQtOv/o2v1Ium3aria8du+QD7458gNly6CdD8y0vrWJLjz3JP9c8HI=
+response:
+  code: 200
+  status: INCOMPLETE
+  id: '{lms:response.body.id}'
+  deliveryOption: LMS
+---
+comment: "Update listing"
+request:
+  uri: /inventoryv2/listings/v2/{lms:response.body.id}
+  method: PUT
+  headers:
+    - Authorization: Bearer JYf0azPrf1RAvhUhpGZudVU9bBEa
+    - x-sh-service-context: '{role=R3, operatorId=tb, proxiedId=1000000019}'
+  body:
+    lmsApprovalStatus: 2  
+response:
+  code: 200
+  status: ACTIVE

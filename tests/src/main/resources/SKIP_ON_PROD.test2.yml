@@ -1,0 +1,74 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: Create UPS listing
+enabled: false
+id: prepareSeller
+include: user/create:withCCAndPaypal
+ccType: Visa
+countryCode: US
+---
+maxRetries: 3
+enabled: false
+id: gettoken
+include: stubhub.iam:web.login
+credentials:
+  username: '{prepareSeller:java.email}'
+  password: '{prepareSeller:java.password}'
+---
+maxRetries: 3
+enabled: false
+id: getcookie
+include: stubhub.iam:token.init
+sessionId: '{gettoken:response.body.login.session_id}'
+---
+id: upsEvent
+enabled: false
+include: event/create:byDateRange
+fulfillmentMethod: UPS
+countryCode: US
+startDaysFromNow: 3
+endDaysFromNow: 100
+---
+id: pdf
+enabled: false
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{upsEvent:java}'
+    deliveryOption: PDF
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    products:
+      row: R1
+      seat: S1
+response:
+  code: 200
+---
+comment: "Get Listing - Valid"
+enabled: false
+request:
+  uri: /inventory/listings/v2/{pdf:response.body.id}
+  method: GET
+  headers:
+    - Cookie: '{getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{gettoken:response.body.login.csrf_token}'
+response:
+  code: 200
+  status: ACTIVE
+  id: '{pdf:response.body.id}'
+  deliveryOption: PDF

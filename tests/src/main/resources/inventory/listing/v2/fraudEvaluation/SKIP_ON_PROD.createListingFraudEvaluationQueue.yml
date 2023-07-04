@@ -1,0 +1,132 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: createListingFraudEvaluation
+id: enableFraudEvaluation
+type: java
+verbose: true
+class: "com.stubhub.test.platform.jmx.ConsoleAdapter"
+method: request
+enabled: "{EXPR:!'{ENV}'.startsWith('lvsp')}"
+parameters: 
+  - role: slx
+  - multiBlades: true
+  - action: invokeOp
+  - methodName: 'setProperty'
+  - name: 'inventoryv2-service:name=SHConfig'
+  - methodIndex: 7
+  - arg0: 'tns.listing.evaluation.new.flow.enabled'
+  - arg1: 'true'
+---
+id: prepareEvent
+include: event/create:byDateRange
+fulfillmentMethod: UPS
+countryCode: US
+startDaysFromNow: 10
+endDaysFromNow: 100
+---
+id: prepareSeller
+include: user/create:withCCAndPaypal
+ccType: Visa
+countryCode: US
+---
+id: createListing1
+include: listing/create:normal
+eventId: '{prepareEvent:java}'
+sellerEmail: '{prepareSeller:java.email}'
+sellerPassword: '{prepareSeller:java.password}'
+quantity: 2
+fulfillmentMethod: PDF
+price: '18.5'
+isGA: 'false'
+---
+id: testFraudEvaluationQueueForCreateListing1
+type: java
+class: com.stubhub.test.inventory.TNSFraudEvaluationProducerTest
+method: browseQueue
+parameters:
+  - '{ENV}'
+  - '{createListing1:java}'
+  - ''
+  -  true
+---
+id: disableFraudEvaluation
+type: java
+verbose: true
+class: "com.stubhub.test.platform.jmx.ConsoleAdapter"
+method: request
+enabled: "{EXPR:!'{ENV}'.startsWith('lvsp')}"
+parameters: 
+  - role: slx
+  - multiBlades: true
+  - action: invokeOp
+  - methodName: 'setProperty'
+  - name: 'inventoryv2-service:name=SHConfig'
+  - methodIndex: 7
+  - arg0: 'tns.listing.evaluation.new.flow.enabled'
+  - arg1: 'false'
+---
+id: createListing2
+include: listing/create:normal
+eventId: '{prepareEvent:java}'
+sellerEmail: '{prepareSeller:java.email}'
+sellerPassword: '{prepareSeller:java.password}'
+quantity: 2
+fulfillmentMethod: PDF
+price: '18.5'
+isGA: 'false'
+---
+id: testFraudEvaluationQueueForCreateListing2
+type: java
+class: com.stubhub.test.inventory.TNSFraudEvaluationProducerTest
+method: browseQueue
+parameters:
+  - '{ENV}'
+  - '{createListing2:java}'
+  - ''
+  -  false
+---
+id: disableFraudEvaluationUsingBlank
+type: java
+verbose: true
+class: "com.stubhub.test.platform.jmx.ConsoleAdapter"
+method: request
+enabled: "{EXPR:!'{ENV}'.startsWith('lvsp')}"
+parameters: 
+  - role: slx
+  - multiBlades: true
+  - action: invokeOp
+  - methodName: 'setProperty'
+  - name: 'inventoryv2-service:name=SHConfig'
+  - methodIndex: 7
+  - arg0: 'tns.listing.evaluation.new.flow.enabled'
+  - arg1: ''
+---
+id: createListing3
+include: listing/create:normal
+eventId: '{prepareEvent:java}'
+sellerEmail: '{prepareSeller:java.email}'
+sellerPassword: '{prepareSeller:java.password}'
+quantity: 2
+fulfillmentMethod: PDF
+price: '18.5'
+isGA: 'false'
+---
+id: testFraudEvaluationQueueForCreateListing5
+type: java
+class: com.stubhub.test.inventory.TNSFraudEvaluationProducerTest
+method: browseQueue
+parameters:
+  - '{ENV}'
+  - '{createListing3:java}'
+  - ''
+  -  false
+---

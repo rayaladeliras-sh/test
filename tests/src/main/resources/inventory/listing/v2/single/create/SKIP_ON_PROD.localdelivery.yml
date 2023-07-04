@@ -1,0 +1,43 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: Create Local Delivery listing
+comment: "create listing - Local Delivery for UPS event"
+id: ups
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:upsEvent:java}'
+    deliverOption: LOCALDELIVERY
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    products:
+      row: B4
+      seat: B5
+response:
+  code: 200
+---
+comment: "Get Listing - Valid"
+request:
+  uri: /inventory/listings/v2/{ups:response.body.id}
+  method: GET
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+  code: 200
+  status: ACTIVE

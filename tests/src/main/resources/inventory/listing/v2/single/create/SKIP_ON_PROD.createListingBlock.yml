@@ -1,0 +1,92 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: http
+  subDomain: api-int
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: Create Listing Block
+id: addUserCC
+include: user/update:addCreditCard
+email: api_us_sell_indy02@testmail.com
+password: password
+ccType: Visa
+countryCode: US
+---
+id: addPaypal
+include: user/update:addPaypal
+email: api_us_sell_indy02@testmail.com
+password: password
+countryCode: US
+---
+type: java
+verbose: true
+class: com.stubhub.test.platform.jmx.ConsoleAdapter
+method: request
+enabled: "{EXPR:!'{ENV}'.startsWith('lvsp')}"
+parameters:
+  role : slx
+  multiBlades: true
+  action: invokeOpByName
+  name: inventoryv2-service:name=SHConfig
+  methodName: setValue
+  arg0: 'blockcreate'
+  arg1: '1000000001'
+---
+comment: "create listing"
+id: createListing
+request:
+  uri: /inventoryv2/listings/v2
+  method: POST
+  headers:
+    - assertion: eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiWmpsa09UVXdNekl3TUdFeFpqZ3hNelUyTkRCa01qY3dNVEkyTVRJME5UaGhNekE1TXpSa01BPT0iLCJraWQiOiJ3c28yY2FyYm9uIn0=.eyJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC9hcGljb250ZXh0IjoiXC9vYXV0aDJcL2Fzc2VydGlvblwvdjEiLCJzdWIiOiJDNzc5OTE1NTc5RkM1RTE0RTA0NDAwMjEyODYxQjI1NiIsImh0dHA6XC9cL3N0dWJodWIuY29tXC9jbGFpbXNcL2FwcGxpY2F0aW9uaWQiOiI1MDYiLCJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC9lbmR1c2VyaWQiOiIxMDAwMDAwMDAxIiwiaHR0cDpcL1wvc3R1Ymh1Yi5jb21cL2NsYWltc1wvYXBwbGljYXRpb25uYW1lIjoiRGVmYXVsdEFwcGxpY2F0aW9uIiwidXNlcl9uYW1lIjoiYXBpX3VzX3NlbGxfaW5keTAyQHRlc3RtYWlsLmNvbSIsImlzcyI6Imh0dHA6XC9cL3dzbzIub3JnXC9wcm9kdWN0c1wvYW0iLCJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC90bXJlZmlkIjoibnVsbCIsImNsaWVudF9pZCI6ImlYeWhZT1I2cEpsOVR0WXlZU3pvaUJYaUI2c2EiLCJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC90aWVyIjpudWxsLCJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC9pc2d1ZXN0IjoiZmFsc2UiLCJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC91c2VydHlwZSI6IkFQUExJQ0FUSU9OX1VTRVIiLCJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC9lbmR1c2VyIjoiYXBpX3VzX3NlbGxfaW5keTAyQHRlc3RtYWlsLmNvbSIsInNjb3BlIjpbImRlZmF1bHQiXSwiZXhwIjoxNTcwNjYyMzI2LCJpYXQiOjE1NTUxMTAzMjYsImp0aSI6ImZiMjc1OGM4LTMyZjAtNGFmZS1hYjVhLTM5YzdiOGE2NzE2OCIsImh0dHA6XC9cL3N0dWJodWIuY29tXC9jbGFpbXNcL3N1YnNjcmliZXIiOiJBcGlfVUtfc2VsbF9idXllcjIwIiwiaHR0cDpcL1wvc3R1Ymh1Yi5jb21cL2NsYWltc1wvZW5kdXNlclRlbmFudElkIjoiLTEyMzQiLCJhdWQiOlsiYXBpOlwvXC9zdHViaHViIl0sImh0dHA6XC9cL3N0dWJodWIuY29tXC9jbGFpbXNcL3Nlc3Npb25pZCI6IkYxM0RBQkEwQzU2QjRDQzc4N0FBNTFFNUQ3MjYzNjg3IiwiaHR0cDpcL1wvc3R1Ymh1Yi5jb21cL2NsYWltc1wvYXBwbGljYXRpb250aWVyIjoiVW5saW1pdGVkIiwiaHR0cDpcL1wvc3R1Ymh1Yi5jb21cL2NsYWltc1wvdmVyc2lvbiI6InYxIiwiaHR0cDpcL1wvc3R1Ymh1Yi5jb21cL2NsYWltc1wvZ3JhbnR0eXBlIjoicGFzc3dvcmQiLCJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6XC9cL3N0dWJodWIuY29tXC9jbGFpbXNcL2VuZHVzZXJndWlkIjoiQzc3OTkxNTU3OUZDNUUxNEUwNDQwMDIxMjg2MUIyNTYifQ==.bW+wV/D78F37h4j6wvlwKYrFb9T30n5Swwa2I1WUTNYVozlaKzGVSWXMaldXn/peisUoSvID0qdu2gDbM/Y5pKmeISBE2prWmusPwo1ArRGGOhxH6REpkMQLvSWflyqqMp3KdIZ37LJ0VnbuZLj2Ys2hYE7rS/Fvs1pa9fOc01s=
+  body:
+    eventId: '{static:pdfEvent:java}'
+    deliveryOption: PDF
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    products:
+      row: 'R1{TIMESTAMP}'
+      seat: S1
+response:
+  code: 429
+---
+type: java
+verbose: true
+class: com.stubhub.test.platform.jmx.ConsoleAdapter
+method: request
+enabled: "{EXPR:!'{ENV}'.startsWith('lvsp')}"
+parameters:
+  role : slx
+  multiBlades: true
+  action: invokeOpByName
+  name: inventoryv2-service:name=SHConfig
+  methodName: setValue
+  arg0: 'blockcreate'
+  arg1: '0'
+---
+comment: "create listing"
+id: create
+request:
+  uri: /inventoryv2/listings/v2
+  method: POST
+  headers:
+    - assertion: eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiWmpsa09UVXdNekl3TUdFeFpqZ3hNelUyTkRCa01qY3dNVEkyTVRJME5UaGhNekE1TXpSa01BPT0iLCJraWQiOiJ3c28yY2FyYm9uIn0=.eyJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC9hcGljb250ZXh0IjoiXC9vYXV0aDJcL2Fzc2VydGlvblwvdjEiLCJzdWIiOiJDNzc5OTE1NTc5RkM1RTE0RTA0NDAwMjEyODYxQjI1NiIsImh0dHA6XC9cL3N0dWJodWIuY29tXC9jbGFpbXNcL2FwcGxpY2F0aW9uaWQiOiI1MDYiLCJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC9lbmR1c2VyaWQiOiIxMDAwMDAwMDAxIiwiaHR0cDpcL1wvc3R1Ymh1Yi5jb21cL2NsYWltc1wvYXBwbGljYXRpb25uYW1lIjoiRGVmYXVsdEFwcGxpY2F0aW9uIiwidXNlcl9uYW1lIjoiYXBpX3VzX3NlbGxfaW5keTAyQHRlc3RtYWlsLmNvbSIsImlzcyI6Imh0dHA6XC9cL3dzbzIub3JnXC9wcm9kdWN0c1wvYW0iLCJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC90bXJlZmlkIjoibnVsbCIsImNsaWVudF9pZCI6ImlYeWhZT1I2cEpsOVR0WXlZU3pvaUJYaUI2c2EiLCJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC90aWVyIjpudWxsLCJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC9pc2d1ZXN0IjoiZmFsc2UiLCJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC91c2VydHlwZSI6IkFQUExJQ0FUSU9OX1VTRVIiLCJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC9lbmR1c2VyIjoiYXBpX3VzX3NlbGxfaW5keTAyQHRlc3RtYWlsLmNvbSIsInNjb3BlIjpbImRlZmF1bHQiXSwiZXhwIjoxNTcwNjYyMzI2LCJpYXQiOjE1NTUxMTAzMjYsImp0aSI6ImZiMjc1OGM4LTMyZjAtNGFmZS1hYjVhLTM5YzdiOGE2NzE2OCIsImh0dHA6XC9cL3N0dWJodWIuY29tXC9jbGFpbXNcL3N1YnNjcmliZXIiOiJBcGlfVUtfc2VsbF9idXllcjIwIiwiaHR0cDpcL1wvc3R1Ymh1Yi5jb21cL2NsYWltc1wvZW5kdXNlclRlbmFudElkIjoiLTEyMzQiLCJhdWQiOlsiYXBpOlwvXC9zdHViaHViIl0sImh0dHA6XC9cL3N0dWJodWIuY29tXC9jbGFpbXNcL3Nlc3Npb25pZCI6IkYxM0RBQkEwQzU2QjRDQzc4N0FBNTFFNUQ3MjYzNjg3IiwiaHR0cDpcL1wvc3R1Ymh1Yi5jb21cL2NsYWltc1wvYXBwbGljYXRpb250aWVyIjoiVW5saW1pdGVkIiwiaHR0cDpcL1wvc3R1Ymh1Yi5jb21cL2NsYWltc1wvdmVyc2lvbiI6InYxIiwiaHR0cDpcL1wvc3R1Ymh1Yi5jb21cL2NsYWltc1wvZ3JhbnR0eXBlIjoicGFzc3dvcmQiLCJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6XC9cL3N0dWJodWIuY29tXC9jbGFpbXNcL2VuZHVzZXJndWlkIjoiQzc3OTkxNTU3OUZDNUUxNEUwNDQwMDIxMjg2MUIyNTYifQ==.bW+wV/D78F37h4j6wvlwKYrFb9T30n5Swwa2I1WUTNYVozlaKzGVSWXMaldXn/peisUoSvID0qdu2gDbM/Y5pKmeISBE2prWmusPwo1ArRGGOhxH6REpkMQLvSWflyqqMp3KdIZ37LJ0VnbuZLj2Ys2hYE7rS/Fvs1pa9fOc01s=
+  body:
+    eventId: '{static:pdfEvent:java}'
+    deliveryOption: PDF
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    products:
+      row: 'R1{TIMESTAMP}'
+      seat: S1
+response:
+  code: 200

@@ -1,0 +1,96 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: create bulk listing - Instant Barcode with event Desc 
+id: createBulkPayoutAndComment
+request:
+ uri: /inventory/listings/v2/bulk
+ method: POST
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+ body:
+  listings:
+    - eventId: '{static:upsEvent:java}'
+      payoutPerProduct:
+        amount: 119.0
+        currency: USD
+      section: 'SEC{TIMESTAMP}'
+      deliveryOption: UPS
+      externalListingId: 'EXT_{TIMESTAMP}_0'
+      products:
+        - row: BR3
+          seat: S1
+          productType: ticket
+    - eventId: '{static:upsEvent:java}'
+      pricePerProduct:
+        amount: 19.0
+        currency: USD
+      section: '{static:randomNum:java}'
+      deliveryOption: UPS
+      comments: Aisle
+      externalListingId: 'EXT_{TIMESTAMP}_1'
+      products:
+        - row: BR3
+          seat: S2
+          productType: ticket
+response:
+ code: 200
+ jobGuid: '{regexp:[0-9]+}'
+---
+type: java
+verbose: true
+class: java.lang.Thread
+method: sleep
+parameters: 30000
+---
+id: callJobService2
+request:
+ uri: /inventory/listings/v2/bulk/{createBulkPayoutAndComment:response.body.jobGuid}
+ method: GET
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+ code: 200
+ jobGuid: '{createBulkPayoutAndComment:response.body.jobGuid}'
+ status: COMPLETED
+ numberOfProcessedListings: 2
+ numberOfInputListings: 2
+---
+comment: "Get Listing - Valid"
+request:
+  uri: /inventory/listings/v2/{callJobService2:response.body.listings[0].listingId}
+  method: GET
+  headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+  code: 200
+  status: ACTIVE
+  pricePerProduct:
+    amount: 132.22
+    currency: USD
+---
+comment: "Get Listing - Valid"
+request:
+  uri: /inventory/listings/v2/{callJobService2:response.body.listings[1].listingId}
+  method: GET
+  headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+  code: 200
+  status: ACTIVE
+  ticketTraits:
+    0:
+     id: 101
+     type: Ticket Feature

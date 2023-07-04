@@ -1,0 +1,209 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: update bulk listing - price with others - SELLAPI-3082
+id: createListings
+request:
+ uri: /inventory/listings/v2/bulk
+ method: POST
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+ body:
+  listings:
+    - eventId: '{static:upsEvent:java}'
+      pricePerProduct:
+        amount: 11.0
+        currency: USD
+      section: 'SEC{TIMESTAMP}'
+      deliveryOption: UPS
+      externalListingId: 'EXT_{TIMESTAMP}_0'
+      products:
+        - row: BR1
+          seat: S1
+          productType: ticket
+    - eventId: '{static:upsEvent:java}'
+      pricePerProduct:
+        amount: 12.0
+        currency: USD
+      section: 'SEC_{TIMESTAMP}'
+      deliveryOption: UPS
+      externalListingId: 'EXT_{TIMESTAMP}_1'
+      products:
+        - row: BR1
+          seat: S2
+          productType: ticket
+    - eventId: '{static:upsEvent:java}'
+      pricePerProduct:
+        amount: 13.0
+        currency: USD
+      section: 'SEC_{TIMESTAMP}'
+      deliveryOption: UPS
+      externalListingId: 'EXT_{TIMESTAMP}_2'
+      products:
+        - row: BR1
+          seat: S3
+          productType: ticket
+    - eventId: '{static:upsEvent:java}'
+      pricePerProduct:
+        amount: 14.0
+        currency: USD
+      section: 'SEC_{TIMESTAMP}'
+      deliveryOption: UPS
+      externalListingId: 'EXT_{TIMESTAMP}_3'
+      products:
+        - row: BR1
+          seat: S4
+          productType: ticket
+response:
+ code: 200
+ jobGuid: '{regexp:[0-9]+}'
+---
+type: java
+verbose: true
+class: java.lang.Thread
+method: sleep
+parameters: 90000
+---
+id: callJobService
+request:
+ uri: /inventory/listings/v2/bulk/{createListings:response.body.jobGuid}
+ method: GET
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+ code: 200
+ jobGuid: '{createListings:response.body.jobGuid}'
+ status: COMPLETED
+ numberOfProcessedListings: 4
+ numberOfInputListings: 4
+ listings:
+  - externalListingId: '{createListings:request.body.listings[0].externalListingId}'
+    listingId: '{regexp:[0-9]+}'
+    status: ACTIVE
+  - externalListingId: '{createListings:request.body.listings[1].externalListingId}'
+    listingId: '{regexp:[0-9]+}'
+    status: ACTIVE
+  - externalListingId: '{createListings:request.body.listings[2].externalListingId}'
+    listingId: '{regexp:[0-9]+}'
+    status: ACTIVE
+  - externalListingId: '{createListings:request.body.listings[3].externalListingId}'
+    listingId: '{regexp:[0-9]+}'
+    status: ACTIVE
+---
+id: updatePriceAndSplitOption
+request:
+ uri: /inventory/listings/v2/bulk
+ method: PUT
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+ body:
+  listings:
+     - externalListingId: '{createListings:request.body.listings[0].externalListingId}'
+       pricePerProduct:
+         amount: 21.0
+         currency: USD
+     - externalListingId: '{createListings:request.body.listings[1].externalListingId}'
+       pricePerProduct:
+         amount: 22.0
+         currency: USD
+     - externalListingId: '{createListings:request.body.listings[2].externalListingId}'
+       splitOption: NONE
+     - externalListingId: '{createListings:request.body.listings[3].externalListingId}'
+       pricePerProduct:
+         amount: 24.0
+         currency: USD
+response:
+ code: 200
+ jobGuid: '{regexp:[0-9]+}'
+---
+type: java
+verbose: true
+class: java.lang.Thread
+method: sleep
+parameters: 90000
+---
+id: updateCallJobService1
+request:
+ uri: /inventory/listings/v2/bulk/{updatePriceAndSplitOption:response.body.jobGuid}
+ method: GET
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+ code: 200
+ jobGuid: '{updatePriceAndSplitOption:response.body.jobGuid}'
+ status: COMPLETED
+ numberOfProcessedListings: 4
+ numberOfInputListings: 4
+---
+comment: "Get Listing - price: listing 1"
+request:
+ uri: /inventory/listings/v2/{updateCallJobService1:response.body.listings[0].listingId}
+ method: GET
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+ code: 200
+ id: '{updateCallJobService1:response.body.listings[0].listingId}'
+ status: ACTIVE
+ pricePerProduct:
+   amount: 21.0
+   currency: USD
+---
+comment: "Get Listing - price: listing 2"
+request:
+ uri: /inventory/listings/v2/{updateCallJobService1:response.body.listings[1].listingId}
+ method: GET
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+ code: 200
+ id: '{updateCallJobService1:response.body.listings[1].listingId}'
+ status: ACTIVE
+ pricePerProduct:
+  amount: 22.0
+  currency: USD
+---
+comment: "Get Listing - split option and price: listing 3"
+request:
+ uri: /inventory/listings/v2/{updateCallJobService1:response.body.listings[2].listingId}
+ method: GET
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+ code: 200
+ id: '{updateCallJobService1:response.body.listings[2].listingId}'
+ status: ACTIVE
+ pricePerProduct:
+   amount: 13.0
+   currency: USD
+ splitOption: NONE
+---
+comment: "Get Listing - price: listing 4"
+request:
+ uri: /inventory/listings/v2/{updateCallJobService1:response.body.listings[3].listingId}
+ method: GET
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+ code: 200
+ id: '{updateCallJobService1:response.body.listings[3].listingId}'
+ status: ACTIVE
+ pricePerProduct:
+   amount: 24.0
+   currency: USD

@@ -1,0 +1,89 @@
+sequence: new
+sequenceName: Scrubbed Listing
+id: getVenueId
+csrf: csrf
+cookie: cookie
+request:
+  method: GET
+  subDomain: api-dev
+  headers:
+    - Accept: application/json
+    - Content-Type: application/json
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  uri: /search/catalog/events/v3/?fieldList=venue&rows=1&country=US&groupingId=43992&parking=false&sort=eventDateLocal desc
+response:
+  code: 200
+---
+id: getEventId
+verbose: true
+csrf: csrf
+cookie: cookie
+request:
+  method: GET
+  subDomain: api-dev
+  headers:
+    - Accept: application/json
+    - Content-Type: application/json
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  uri: /search/catalog/events/v3/?venueId={getVenueId:response.body.events[0].venue.id}&rows=1&country=US&sort=eventDateLocal asc
+response:
+  code: 200
+---
+id: venueMetadata
+verbose: true
+csrf: csrf
+cookie: cookie
+venueConfigId: venueConfigId
+request:
+  method: GET
+  subDomain: api-dev
+  headers:
+    - Accept: application/json
+    - Content-Type: application/json
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  uri: /catalog/venues/v3/venueConfigMetadata?venueConfigId={getVenueId:response.body.events[0].venueConfiguration.id}
+response:
+  code: 200
+---
+comment: "create listing -scrubbing"
+id: scrubbedListing
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  subDomain: api-dev
+  headers:
+    - Accept: application/json
+    - Content-Type: application/json
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{getEventId:response.body.events[0].id}'
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: '{venueMetadata:response.body.venueConfigurations[0].seatingZones[0].seatingSections[0].name}'
+    products:
+      row: SSR1
+      seat: '{static:randomNum:java}'
+response:
+  code: 200
+---
+comment: "Get Listing - Valid"
+request:
+  uri: /inventory/listings/v2/{scrubbedListing:response.body.id}
+  method: GET
+  subDomain: api-dev
+  headers:
+    - Accept: application/json
+    - Content-Type: application/json
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+  code: 200
+  status: ACTIVE
+  id: '{scrubbedListing:response.body.id}'
+  venueConfigId: '{venueMetadata:response.body.venueConfigurations[0].seatingZones[0].seatingSections[0].id}'
+

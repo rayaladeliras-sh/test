@@ -1,0 +1,22 @@
+dependsOn:
+  - name: inventory/listing/v2/fraudEvaluation/SKIP_ON_PROD.FraudListingEndToEndTestReject
+---
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+id: listingUpdatePublish1
+type: java
+class: com.stubhub.test.inventory.ActiveMQTrigger
+method: publishToQueue
+parameters:
+  - '{ENV}'
+  - 'tns.fraud.listingeval.outgoing.queue'
+  -  {listingId: '{EXPR: String.valueOf(123456789000) }', sellerId: '1234567890', fraudCheckStatusId: '123456',fraudResolutionId: '12345'}
+  

@@ -1,0 +1,70 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: Update Price and Reduce quantity
+comment: "Update Price and Reduce quantity"
+id: updatePriceReduceQty
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:pdfEvent:java}'
+    deliveryOption: PDF
+    pricePerProduct:
+      amount: 20.0
+      currency: USD
+    section: '{static:randomNum:java}'
+    products:
+      - row: R2
+        seat: S1
+      - row: R2
+        seat: S2
+      - row: R2
+        seat: S3
+      - row: R2
+        seat: S4
+response:
+  code: 200
+---
+comment: "Updating listing - price and qty"
+request:
+  uri: /inventory/listings/v2/{updatePriceReduceQty:response.body.id}
+  method: PUT
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    payoutPerProduct:
+      amount: 119.0
+      currency: USD
+    quantity: 3
+esponse:
+  code: 200
+---
+comment: "Get Listing - Valid"
+request:
+  uri: /inventory/listings/v2/{updatePriceReduceQty:response.body.id}
+  method: GET
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+  code: 200
+  status: ACTIVE
+  id: '{updatePriceReduceQty:response.body.id}'
+  pricePerProduct:
+    amount: 132.22
+    currency: USD
+  quantity: 3
+  quantityRemain: 3

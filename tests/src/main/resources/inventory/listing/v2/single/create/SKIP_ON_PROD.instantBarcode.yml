@@ -1,0 +1,542 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: Create Instant barcode listing with SRS
+type: java
+id: tdcInstantBarcode
+class: com.stubhub.test.inventory.RandomNumberGenerator
+method: generateRandomBarcodeForTDC
+---
+type: java
+id: tdcInstantBarcode1
+class: com.stubhub.test.inventory.RandomNumberGenerator
+method: generateRandomBarcodeForTDC
+---
+type: java
+id: tdcInstantBarcode2
+class: com.stubhub.test.inventory.RandomNumberGenerator
+method: generateRandomBarcodeForTDC
+---
+type: java
+id: tdcInstantBarcode3
+class: com.stubhub.test.inventory.RandomNumberGenerator
+method: generateRandomBarcodeForTDC
+---
+type: java
+id: tdcInstantBarcode4
+class: com.stubhub.test.inventory.RandomNumberGenerator
+method: generateRandomBarcodeForTDC
+---
+type: java
+id: tdcInstantBarcode5
+class: com.stubhub.test.inventory.RandomNumberGenerator
+method: generateRandomBarcodeForTDC
+---
+type: java
+id: tdcInstantBarcode6
+class: com.stubhub.test.inventory.RandomNumberGenerator
+method: generateRandomBarcodeForTDC
+---
+type: java
+id: tdcInstantBarcode7
+class: com.stubhub.test.inventory.RandomNumberGenerator
+method: generateRandomBarcodeForTDC
+---
+type: java
+id: tdcInstantBarcode8
+class: com.stubhub.test.inventory.RandomNumberGenerator
+method: generateRandomBarcodeForTDC
+---
+type: java
+id: tdcInstantBarcode9
+class: com.stubhub.test.inventory.RandomNumberGenerator
+method: generateRandomBarcodeForTDC
+---
+comment: "create listing"
+id: createInstantBarcodeTDC
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:testCreateTDCBarcodeEvent:java}'
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    products:
+        row: R1
+        seat: '{static:randomNum2:java}'
+        fulfillmentArtifact: '{tdcInstantBarcode:java}'
+response:
+  code: 200
+  status: PENDING | ACTIVE
+---
+comment: "Get Listing - Valid"
+request:
+  uri: /inventory/listings/v2/{createInstantBarcodeTDC:response.body.id}
+  method: GET
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+  code: 200
+  status: PENDING | ACTIVE
+  id: '{createInstantBarcodeTDC:response.body.id}'
+  deliveryOption: BARCODE
+  preDelivered: true
+---
+type: java
+id: tmBarcode1
+class: com.stubhub.test.inventory.RandomNumberGenerator
+method: generateRandomBarcodeForTM  
+---
+id: createInstantBarcodeTM
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:testCreateTMBarcodeEvent:java}'
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    products:
+        row: '{static:randomNum:java}'
+        seat: S1
+        fulfillmentArtifact: '{tmBarcode1:java}'
+response:
+  code: 200
+  status: PENDING | ACTIVE
+---
+id: createInstantBarcodePAC
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:testCreatePACBarcodeEvent:java}'
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    products:
+        row: R1
+        seat: '{static:randomNum2:java}'
+        fulfillmentArtifact: '{static:pacBarcode:java}'
+response:
+  code: 200
+  status: PENDING | ACTIVE
+---
+type: sql
+enabled: false
+comment: updateExtSystem
+verbose: true
+id: updateExtSystem
+sql: Update External_System Set Primary_Ticket_Vendor_Id=7 Where ext_System_Id=643
+---
+type: sql
+enabled: false
+comment: updateVendorStubXref
+verbose: true
+id: updateVendorStubXref
+sql: Update Vendor_Stub_Event_Xref Set Ext_System_Id=643 Where Primary_Ticket_Vendor_Id=7 And Active=1 And Vendor_Event_Date > Sysdate
+---
+type: sql
+enabled: false
+comment: selectSAPEvent
+verbose: true
+id: selectSAPEvent
+sql: Select Event_Id From Vendor_Stub_Event_Xref Where Active=1 And Primary_Ticket_Vendor_Id=7 And Vendor_Event_Date > Sysdate
+---
+type: java
+id: sapBarcode
+class: com.stubhub.test.inventory.RandomNumberGenerator
+method: generateRandomBarcodeForAEG
+---
+id: createInstantBarcodeSAP
+enabled: false
+comment: SAP event -create instant barcode listing
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: 103103622
+    pricePerProduct:
+      amount: 19.0
+      currency: GBP
+    section: 'SEC{TIMESTAMP}'
+    paymentType: 1
+    products:
+        row: R52
+        seat: S52
+        fulfillmentArtifact: '{sapBarcode:java}'
+response:
+  code: 200
+  status: PENDING | ACTIVE
+---
+comment: "create listing"
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:testCreateTDCBarcodeEvent:java}'
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    products:
+       - row: R1
+         seat: '{static:randomNum2:java}'
+         fulfillmentArtifact: '{tdcInstantBarcode:java}'
+       - row: R1
+         seat: '{static:randomNum2:java}'
+response:
+  code: 400
+  description: Fulfillment artifacts do not match the quantity
+---
+comment: "create listing"
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:testCreateTDCBarcodeEvent:java}'
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    products:
+       - row: R1
+         seat: '{static:randomNum1:java}'
+         fulfillmentArtifact: '{tdcInstantBarcode1:java}'
+       - row: R1
+         seat: '{static:randomNum2:java}'
+         fulfillmentArtifact: '{tdcInstantBarcode2:java}'
+response:
+  code: 200
+  status: PENDING | ACTIVE
+---
+comment: "create listing"
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:testCreateTDCBarcodeEvent:java}'
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    products:
+       - row: R1
+         fulfillmentArtifact: '{tdcInstantBarcode3:java}'
+response:
+  code: 400
+  description: Seats not provided for the Fulfillment artifacts
+---
+comment: "create listing"
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:testCreateTDCBarcodeEvent:java}'
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    products:
+       - row: R1
+         externalId: '{static:randomNum1:java}'
+         fulfillmentArtifact: '{tdcInstantBarcode3:java}'
+response:
+  code: 200
+  status: PENDING | ACTIVE
+---
+comment: "create listing"
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:testCreateTDCBarcodeEvent:java}'
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    products:
+       - row: R1
+         seat: s1
+       - row: R1
+         seat: s1  
+response:
+  code: 400
+  description: Duplicate row and seat numbers not allowed
+---
+comment: "create listing"
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:testCreateTDCBarcodeEvent:java}'
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    products:
+       - row: R1
+         seat: s1
+       - row: R1
+         seat: s2
+       - row: R1
+         seat: s3
+       - row: R1
+         seat: s2  
+response:
+  code: 400
+  description: Duplicate row and seat numbers not allowed
+--- 
+comment: "create listing"
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:testCreateTDCBarcodeEvent:java}'
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    products:
+       - row: R1
+         seat: s1
+       - row: R1
+         seat: s1  
+         productType: parking_pass
+response:
+  code: 200
+---
+comment: "create listing"
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:testCreateTDCBarcodeEvent:java}'
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    products:
+       - row: R1
+         seat: s1
+       - row: R1
+         seat: s2  
+response:
+  code: 200
+  status: PENDING | ACTIVE  
+--- 
+comment: "create listing"
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:testCreateTDCBarcodeEvent:java}'
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    products:
+       - row: R1
+         seat: s1   
+         fulfillmentArtifact: '{tdcInstantBarcode6:java}'
+       - row: R1
+         fulfillmentArtifact: '{tdcInstantBarcode7:java}'
+response:
+  code: 400
+  description: Seats not provided for the Fulfillment artifacts
+---
+comment: "create listing"
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:testCreateTDCBarcodeEvent:java}'
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    products:
+       - row: R1
+         seat: S1
+         fulfillmentArtifact: '{tdcInstantBarcode6:java}'
+       - row: R1
+         fulfillmentArtifact: '{tdcInstantBarcode7:java}'
+         productType: parking_pass
+response:
+  code: 200
+  status: PENDING | ACTIVE
+---
+comment: "create listing"
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:testCreateTDCBarcodeEvent:java}'
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    products:
+       - row: R1
+         seat: s1
+         fulfillmentArtifact: '{tdcInstantBarcode8:java}'
+       - row: R2
+         seat: S2
+         fulfillmentArtifact: '{tdcInstantBarcode9:java}'
+         productType: parking_pass
+response:
+  code: 200
+  status: PENDING | ACTIVE
+---
+comment: "create listing"
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:testCreateTDCBarcodeEvent:java}'
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    products:
+       - row: R1
+         seat: '-'
+       - row: R1
+         seat: '-'  
+response:
+  code: 200
+  status: PENDING | ACTIVE
+---
+comment: "create listing"
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:testCreateTDCBarcodeEvent:java}'
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    products:
+       - row: R1
+         seat: a-10
+       - row: R1
+         seat: a-10  
+response:
+  code: 400
+  description: Duplicate row and seat numbers not allowed
+---
+comment: "create listing"
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:testCreateTDCBarcodeEvent:java}'
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    products:
+       - row: R1
+         seat: a-10
+       - row: R1
+         seat: '-'
+       - row: R1
+         seat: '-'
+       - row: R1
+         seat: a-10  
+response:
+  code: 400
+  description: Duplicate row and seat numbers not allowed
+---
+comment: "create listing"
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:testCreateTDCBarcodeEvent:java}'
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    products:
+       - row: R1
+         seat: a-10
+       - row: R1
+         seat: '-'
+       - row: R2
+         seat: a-10
+       - row: R2
+         seat: '-' 
+response:
+  code: 200
+  status: PENDING | ACTIVE

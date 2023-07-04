@@ -1,0 +1,97 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: Duplicate SRS check
+comment: "create listing - PDF"
+id: pdf
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:pdfEvent:java}'
+    deliveryOption: PDF
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SE1'
+    products:
+      row: R12
+      seat: S13
+response:
+  code: 200
+---
+type: java
+verbose: true
+class: java.lang.Thread
+method: sleep
+parameters: 60000
+---
+comment: "create listing - PDF again"
+id: pdfAgain
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:pdfEvent:java}'
+    deliveryOption: PDF
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SE1'
+    products:
+      row: R12
+      seat: S13
+response:
+  code: 400
+  description: A listing with the same section, row, and seat is already available on StubHub for the event
+---
+comment: "create inactive listing - PDF again"
+id: pdfAgainInactive
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:pdfEvent:java}'
+    deliveryOption: PDF
+    status: INACTIVE
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SE1'
+    products:
+      row: R12
+      seat: S13
+response:
+  code: 400
+  description: A listing with the same section, row, and seat is already available on StubHub for the event
+---
+comment: "delete listing"
+id: deleteListing
+request:
+  uri: /inventory/listings/v2/{pdf:response.body.id}
+  method: PUT
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    status: DELETED
+response:
+  code: 200
+  status: DELETED

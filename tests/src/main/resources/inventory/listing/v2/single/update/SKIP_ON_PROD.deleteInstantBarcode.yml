@@ -1,0 +1,65 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: Update Listing with status DELETED
+type: java
+id: tdcBarcodeToDelete
+class: com.stubhub.test.inventory.RandomNumberGenerator
+method: generateRandomBarcodeForTDC
+---
+id: deleteInstantBarcode
+request:
+ uri: /inventory/listings/v2
+ method: POST
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+ body:
+   eventId: '{static:testCreateTDCBarcodeEvent:java}'
+   pricePerProduct:
+     amount: 19.0
+     currency: USD
+   section: '{static:randomNum:java}'
+   deliveryOption: BARCODE
+   products:
+     - row: R1
+       seat: S5
+       fulfillmentArtifact: '{tdcBarcodeToDelete:java}'
+response:
+ code: 200
+ status: ACTIVE
+---
+comment: "Update Listing - status"
+request:
+ uri: /inventory/listings/v2/{deleteInstantBarcode:response.body.id}
+ method: PUT
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+ body:
+   status: DELETED
+response:
+ code: 200
+ status: DELETED
+ id: '{deleteInstantBarcode:response.body.id}'
+---
+comment: "Get Listing - Status"
+request:
+ uri: /inventory/listings/v2/{deleteInstantBarcode:response.body.id}
+ method: GET
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+ code: 200
+ status: DELETED
+ id: '{deleteInstantBarcode:response.body.id}'
+ preDelivered: true

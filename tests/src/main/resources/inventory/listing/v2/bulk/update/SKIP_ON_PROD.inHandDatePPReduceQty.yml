@@ -1,0 +1,168 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: update bulk listing - inhanddate,pp,reduce qty
+id: regularUPSListing
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:upsEvent:java}'
+    deliveryOption: UPS
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    quantity: 4
+response:
+  code: 200
+---
+id: gaListing
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:pdfEvent:java}'
+    deliveryOption: PDF
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    quantity: 2
+response:
+  code: 200
+---
+id: regularPDFListing
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:pdfEvent:java}'
+    deliveryOption: PDF
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    quantity: 1
+response:
+  code: 200
+---
+id: getInhandListing
+comment: "Get Listing - In Hand Date"
+request:
+ uri: /inventory/listings/v2/{gaListing:response.body.id}
+ method: GET
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+ code: 200
+ status: ACTIVE
+---
+id: inhandDateBulk
+type: groovy
+verbose: true
+parameters: '{getInhandListing:response.body.inhandDate}'
+script: |
+ def (dateVar1,dateVar2) = (parameters.split('T'))
+ def dateVal = (new Date()).parse('yyyy-MM-dd', dateVar1)
+ def newDate = (dateVal.minus(2)).format('yyyy-MM-dd')
+ return newDate + 'T'+ dateVar2
+---
+id: updateInhandQtyAddParkingPass
+request:
+ uri: /inventory/listings/v2/bulk
+ method: PUT
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+ body:
+  listings:
+     - listingId: '{gaListing:response.body.id}'
+       inhandDate: '{inhandDateBulk:groovy}'
+     - listingId: '{regularUPSListing:response.body.id}'
+       quantity: 2
+     - listingId: '{regularPDFListing:response.body.id}'
+       ticketTraits:
+          - name: Parking Pass
+            operation: ADD
+response:
+ code: 200
+ jobGuid: '{regexp:[0-9]+}'
+---
+type: java
+verbose: true
+class: java.lang.Thread
+method: sleep
+parameters: 30000
+---
+id: updateCallJobService2
+request:
+ uri: /inventory/listings/v2/bulk/{updateInhandQtyAddParkingPass:response.body.jobGuid}
+ method: GET
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+ code: 200
+ jobGuid: '{updateInhandQtyAddParkingPass:response.body.jobGuid}'
+ status: COMPLETED
+ numberOfProcessedListings: 2
+ numberOfInputListings: 2
+---
+comment: "Get Listing - In Hand Date"
+request:
+ uri: /inventory/listings/v2/{gaListing:response.body.id}
+ method: GET
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+ code: 200
+ status: ACTIVE
+ id: '{gaListing:response.body.id}'
+ inhandDate: '{inhandDateBulk:groovy}'
+---
+comment: "Get Listing - qty"
+request:
+ uri: /inventory/listings/v2/{regularUPSListing:response.body.id}
+ method: GET
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+ code: 200
+ status: ACTIVE
+ id: '{regularUPSListing:response.body.id}'
+ quantity: 2
+---
+comment: "Get Listing - Added Parking pass"
+request:
+ uri: /inventory/listings/v2/{regularPDFListing:response.body.id}
+ method: GET
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+ code: 200
+ status: ACTIVE
+ id: '{regularPDFListing:response.body.id}'
+ ticketTraits:
+    0:
+      id: 101
+      name: Parking pass
+      type: Ticket Feature

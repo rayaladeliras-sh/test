@@ -1,0 +1,101 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: Create LMS listing - Trusted
+id: lms1
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:lmsEvent:java}'
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    deliveryOption: LMS
+    products:
+      - row: R1
+        seat: S1
+response:
+  code: 200
+  status: INCOMPLETE
+---
+comment: "Get Listing - Non Trusted Seller"
+request:
+  uri: /inventory/listings/v2/{lms1:response.body.id}
+  method: GET
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+  code: 200
+  status: INCOMPLETE
+  id: '{lms1:response.body.id}'
+  lmsApprovalStatus: 1
+---
+type: sql
+comment: SQL select user Id
+verbose: true
+id: selectUserId
+minCount: 1
+username: stub_app
+password: dstub_app
+sql: select id from users where default_email = ?
+values:
+  - '{static:prepareSeller:java.email}'
+---
+type: sql
+comment: Add user to user group
+verbose: true
+id: addUserToGroup
+minCount: 1
+sql: |
+    insert into user_group_user_xref select user_group_user_xref_seq.nextval, user_group_id,?,0,1,sysdate,
+    'stub',sysdate,'stub'from user_group where user_group='NYC.2'
+values:
+  - '{selectUserId:sql.rows[0].id}'
+---
+id: lms2
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:lmsEvent:java}'
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    deliveryOption: LMS
+    products:
+      - row: R1
+        seat: '{static:randomNum:java}'
+response:
+  code: 200
+  status: ACTIVE
+---
+comment: "Get Listing - Trusted Seller"
+request:
+  uri: /inventory/listings/v2/{lms2:response.body.id}
+  method: GET
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+  code: 200
+  status: ACTIVE
+  id: '{lms2:response.body.id}'
+  lmsApprovalStatus: 2

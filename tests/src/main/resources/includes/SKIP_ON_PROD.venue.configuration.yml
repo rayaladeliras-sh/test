@@ -1,0 +1,19 @@
+id: venueConfiguration
+csrf: csrf
+cookie: cookie
+eventId: eventId
+request:
+  method: GET
+  subDomain: api-dev
+  headers:
+    - Accept: application/json
+    - Content-Type: application/json
+    - X-csrf-Token: '{:csrf}'
+    - Cookie: '{:cookie}'
+  uri: catalog/venues/v3/venueconfigurations?eventId={:eventId}&shstore=1
+response:
+  code: 200
+  bodyMatch: contains
+  body:
+    venueConfiguration[0].id: '{regexp:[0-9]+}'
+    venueConfiguration[0].isSectionMapped: true

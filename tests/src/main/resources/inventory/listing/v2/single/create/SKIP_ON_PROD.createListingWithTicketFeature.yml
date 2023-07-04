@@ -1,0 +1,55 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: Create UPS listing with ticket feature
+comment: "create listing - UPS"
+id: ups
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:upsEvent:java}'
+    deliveryOption: UPS
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    products:
+      - row: R1
+        seat: S1
+      - row: R1
+        seat: S2
+      - row: R1
+        seat: S3
+      - row: R1
+        seat: S4
+    ticketTraits:
+      id: 14842
+       
+response:
+  code: 200
+---
+comment: "Get Listing - Valid"
+request:
+  uri: /inventory/listings/v2/{ups:response.body.id}
+  method: GET
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+  code: 200
+  status: ACTIVE
+  id: '{ups:response.body.id}'
+  splitOption: NONE
+  splitQuantity: 4

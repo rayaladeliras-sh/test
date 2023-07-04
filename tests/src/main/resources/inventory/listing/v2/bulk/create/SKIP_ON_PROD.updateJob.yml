@@ -1,0 +1,153 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: create bulk listing - same event
+id: createBulkListing
+request:
+ uri: /inventory/listings/v2/bulk
+ method: POST
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+ body:
+  listings:
+    - eventId: '{static:pdfEvent:java}'
+      pricePerProduct:
+        amount: 19.0
+        currency: USD
+      section: '{static:randomNum:java}'
+      deliveryOption: PDF
+      externalListingId: 'EXT_{TIMESTAMP}_0'
+      products:
+        - row: BR1
+          seat: S1
+          productType: ticket
+    - eventId: '{static:pdfEvent:java}'
+      pricePerProduct:
+        amount: 19.0
+        currency: USD
+      section: '{static:randomNum:java}'
+      deliveryOption: PDF
+      externalListingId: 'EXT_{TIMESTAMP}_1'
+      products:
+        - row: BR1
+          seat: S2
+          productType: ticket
+    - eventId: '{static:pdfEvent:java}'
+      pricePerProduct:
+        amount: 19.0
+        currency: USD
+      section: '{static:randomNum:java}'
+      deliveryOption: PDF
+      externalListingId: 'EXT_{TIMESTAMP}_2'
+      products:
+        - row: BR1
+          seat: S3
+          productType: ticket
+    - eventId: '{static:pdfEvent:java}'
+      pricePerProduct:
+        amount: 19.0
+        currency: USD
+      section: '{static:randomNum:java}'
+      deliveryOption: PDF
+      externalListingId: 'EXT_{TIMESTAMP}_3'
+      products:
+        - row: BR1
+          seat: S4
+          productType: ticket
+    - eventId: '{static:pdfEvent:java}'
+      pricePerProduct:
+        amount: 19.0
+        currency: USD
+      section: '{static:randomNum:java}'
+      deliveryOption: PDF
+      externalListingId: 'EXT_{TIMESTAMP}_4'
+      products:
+        - row: BR1
+          seat: S5
+          productType: ticket
+response:
+ code: 200
+ jobGuid: '{regexp:[0-9]+}'
+---
+type: java
+verbose: true
+class: java.lang.Thread
+method: sleep
+parameters: 30000
+---
+id: callJobService
+request:
+ uri: /inventory/listings/v2/bulk/{createBulkListing:response.body.jobGuid}
+ method: GET
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+ code: 200
+ jobGuid: '{createBulkListing:response.body.jobGuid}'
+ status: COMPLETED
+ numberOfProcessedListings: 5
+ numberOfInputListings: 5
+ listings:
+  - externalListingId: '{createBulkSameEvent:request.body.listings[0].externalListingId}'
+    listingId: '{regexp:[0-9]+}'
+    status: ACTIVE
+  - externalListingId: '{createBulkSameEvent:request.body.listings[1].externalListingId}'
+    listingId: '{regexp:[0-9]+}'
+    status: ACTIVE
+  - externalListingId: '{createBulkSameEvent:request.body.listings[2].externalListingId}'
+    listingId: '{regexp:[0-9]+}'
+    status: ACTIVE
+  - externalListingId: '{createBulkSameEvent:request.body.listings[3].externalListingId}'
+    listingId: '{regexp:[0-9]+}'
+    status: ACTIVE
+  - externalListingId: '{createBulkSameEvent:request.body.listings[4].externalListingId}'
+    listingId: '{regexp:[0-9]+}'
+    status: ACTIVE
+---
+type: sql
+enabled: true
+comment: update job status to inprogress
+verbose: true
+id: updateJobStatus
+sql: update bulk_job set bulk_status_id = 3 where bulk_job_id = ?
+values:
+  - '{createBulkListing:response.body.jobGuid}'
+---
+id: updateJobService
+request:
+ uri: /inventory/listings/v2/bulk/{createBulkListing:response.body.jobGuid}
+ method: PUT
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+ body:
+   jobStatus: ERROR
+   listingStatus: DELETED
+response:
+ code: 200
+ jobGuid: '{createBulkListing:response.body.jobGuid}'
+ status: ERROR
+---
+type: sql
+comment: SQL select system status column tickets table
+verbose: true
+id: selectSystemStatus
+minCount: 1
+username: stub_app
+password: dstub_app
+sql: 'select system_status from tickets where id=?'
+values: 
+ - '{callJobService:response.body.listings[0].listingId}'
+rows:
+ -
+  - DELETED

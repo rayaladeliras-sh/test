@@ -1,0 +1,30 @@
+id: createMinimal
+# Minimalistic Listing Creation
+eventId: eventId
+quantity: quantity
+amount: amount
+csrf: csrf
+cookie: cookie
+# End of Payload Data
+request:
+  method: POST
+  headers:
+   - Content-Type: 'application/json'
+   - Accept: 'application/json'
+   - X-csrf-Token: '{:csrf}'
+   - Cookie: '{:cookie}'
+  uri: /inventory/listings/v2
+  body:
+    eventId: '{:eventId}'
+    quantity: '{:quantity}'
+    paymentType: 1
+    pricePerProduct:
+      amount: '{:amount}'
+      currency: USD
+response:
+  code: 200
+  bodyMatch: contains
+  body:
+    id: '{regexp:[0-9]+}'
+    status: '{regexp:(ACTIVE|INACTIVE)}'
+    deliveryOption: '{regexp:(BARCODE|PDF|UPS|SHIPPING|LMF)}'

@@ -1,0 +1,73 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+id: prepareCASeller
+include: user/create:withCCAndPaypal
+ccType: Visa
+countryCode: US
+---
+id: caPdfEvent
+include: event/create:byDateRange
+fulfillmentMethod: PDF
+countryCode: CA
+startDaysFromNow: 3
+endDaysFromNow: 100
+---
+maxRetries: 3
+id: gettoken
+include: stubhub.iam:web.login
+credentials:
+  username: '{prepareCASeller:java.email}'
+  password: '{prepareCASeller:java.password}'
+---
+maxRetries: 3
+id: getcookie
+include: stubhub.iam:token.init
+sessionId: '{gettoken:response.body.login.session_id}'
+---
+sequenceName: Create PDF listing
+comment: "CA create listing - PDF"
+id: getCADListing
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: 104245653
+    deliveryOption: PDF
+    pricePerProduct:
+      amount: 20.0
+      currency: USD
+    faceValue:
+      amount: 25.0
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    products:
+      row: R5
+      seat: S5
+response:
+  code: 200
+---
+comment: "Get Listing"
+id: getListingV2
+request:
+  uri: /inventory/listings/v2/{getCADListing:response.body.id}
+  method: GET
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+  code: 200
+  products:
+    row: R5
+    seat: S5

@@ -1,0 +1,17 @@
+id: eventGrouping
+csrf: csrf
+cookie: cookie
+request:
+  method: GET
+  subDomain: api-dev
+  headers:
+    - Accept: application/json
+    - Content-Type: application/json
+    - X-csrf-Token: '{:csrf}'
+    - Cookie: '{:cookie}'
+  uri: /recommendations/core/v2/eventgroupings?handleName=unified_homepage&minAvailableTickets=1&maxEventsPerPerformer=1&limit=1&shstore=1
+response:
+  code: 200
+  bodyMatch: contains
+  body:
+    groups[0].events[0].id: '{regexp:[0-9]+}'

@@ -1,0 +1,78 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: Update Sale End Date
+id: upsListing
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:upsEvent:java}'
+    deliveryOption: UPS
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+      section: 'SEC{TIMESTAMP}'
+    products:
+      row: R1
+      seat: S1
+response:
+  code: 200
+  status: ACTIVE
+---
+id: getSaleEndDate
+comment: "Get Listing"
+request:
+  uri: /inventory/listings/v2/{upsListing:response.body.id}
+  method: GET
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+  code: 200
+---
+id: saleEndDate
+type: groovy
+verbose: true
+parameters: '{getSaleEndDate:response.body.saleEndDate}'
+script: |
+ def (dateVar1,dateVar2) = (parameters.split('T'))
+ def dateVal = (new Date()).parse('yyyy-MM-dd', dateVar1)
+ def newDate = (dateVal.minus(1)).format('yyyy-MM-dd')
+ return newDate + 'T'+ dateVar2
+---
+comment: "Updating Sale End Date"
+request:
+  uri: /inventory/listings/v2/{upsListing:response.body.id}
+  method: PUT
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    saleEndDate: '{saleEndDate:groovy}'
+response:
+  code: 200
+---
+comment: "Get Listing - after sale end date update"
+request:
+ uri: /inventory/listings/v2/{upsListing:response.body.id}
+ method: GET
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+  code: 200
+  status: ACTIVE
+  id: '{upsListing:response.body.id}'
+  saleEndDate: '{saleEndDate:groovy}'

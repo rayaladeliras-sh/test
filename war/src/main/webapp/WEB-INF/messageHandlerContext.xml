@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:jms="http://www.springframework.org/schema/jms"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/jms http://www.springframework.org/schema/jms/spring-jms.xsd">
+
+
+	<!-- ActiveMQ Consumer Connection Factory -->
+	<bean id="shActiveMqConsumerConnectionFactory" class="com.stubhub.domain.infrastructure.messaging.client.activemq.SHActiveMQConnectionFactory">
+    	<constructor-arg name="producerURL" value="${pro.common.activeMQ.brokerURL}" />
+    	<constructor-arg name="consumerURL" value="${dedicated_brokernetwork_url}" />
+    	<property name="clientID" value="#{T(java.net.InetAddress).localHost.hostName}"/>
+    	<property name="clientIDPrefix" value="SHIP"/>
+	</bean>
+	
+	<!-- Define Lock and Unlock Inventory Request and Response Destinations -->	
+ 	<bean id="lockInventoryRequestDest" class="org.apache.activemq.command.ActiveMQQueue"
+		autowire="constructor">
+		<constructor-arg value="${inventory.lock.request.queueName}" />
+	</bean>
+ 	<bean id="lockInventoryResponseDest" class="org.apache.activemq.command.ActiveMQQueue"
+		autowire="constructor">
+		<constructor-arg value="${inventory.lock.response.queueName}" />
+	</bean>
+ 	<bean id="unlockInventoryRequestDest" class="org.apache.activemq.command.ActiveMQQueue"
+		autowire="constructor">
+		<constructor-arg value="${inventory.unlock.request.queueName}" />
+	</bean>
+ 	<bean id="unlockInventoryResponseDest" class="org.apache.activemq.command.ActiveMQQueue"
+		autowire="constructor">
+		<constructor-arg value="${inventory.unlock.response.queueName}" />
+	</bean>
+ 	<bean id="sellerPendingInventoryDest" class="org.apache.activemq.command.ActiveMQQueue"
+		autowire="constructor">
+		<constructor-arg value="${seller.pending.inventory.queueName}" />
+	</bean>
+    <!-- Define inventory status notification Destinations -->  
+	<bean id="inventoryStatusNotificationDest" class="org.apache.activemq.command.ActiveMQQueue"
+        autowire="constructor">
+        <constructor-arg value="${inventory.status.notification.queueName}" />
+    </bean>
+	
+	<!-- Define Partner Lock and Unlock Inventory Request Destinations -->	
+ 	<bean id="partnerLockInventoryRequestDest" class="org.apache.activemq.command.ActiveMQQueue"
+		autowire="constructor">
+		<constructor-arg value="${partner.lock.request.queueName}" />
+	</bean>
+ 	<bean id="partnerUnlockInventoryRequestDest" class="org.apache.activemq.command.ActiveMQQueue"
+		autowire="constructor">
+		<constructor-arg value="${partner.unlock.request.queueName}" />
+	</bean>
+
+	<!-- Define inventory reset business Destinations -->
+	<bean id="inventoryUpdateBusinessDest" class="org.apache.activemq.command.ActiveMQQueue"
+		  autowire="constructor">
+		<constructor-arg value="${inventory.update.business.queueName}" />
+	</bean>
+	
+	
+	<!-- Define Lock and Unlock Inventory Request and Response Listeners -->
+	<bean id="lockInventoryRequestListener" class="com.stubhub.domain.inventory.listings.v2.listeners.LockInventoryRequestListener" />
+	<bean id="lockInventoryRequestListenerContainer"
+		class="com.stubhub.domain.infrastructure.messaging.client.jms.SHJMSMessageListenerContainer">
+		<property name="connectionFactory"
+			ref="shActiveMqConsumerConnectionFactory" />
+		<property name="destination" ref="lockInventoryRequestDest" />
+		<property name="messageListener" ref="lockInventoryRequestListener" />
+		<property name="sessionTransacted" value="true" />
+		<property name="concurrentConsumers" value="${inventory.lock.request.consumer.concurrency}" />
+		<property name="autoStartup" value="${inventory.v2.ListenerJmsContainer.autoStartUp:true}" />
+		<property name="sessionAcknowledgeModeName" value="CLIENT_ACKNOWLEDGE" />
+	</bean>
+	
+	<bean id="lockInventoryResponseListener" class="com.stubhub.domain.inventory.listings.v2.listeners.LockInventoryResponseListener" />
+	<bean id="lockInventoryResponseListenerContainer"
+		class="com.stubhub.domain.infrastructure.messaging.client.jms.SHJMSMessageListenerContainer">
+		<property name="connectionFactory"
+			ref="shActiveMqConsumerConnectionFactory" />
+		<property name="destination" ref="lockInventoryResponseDest" />
+		<property name="messageListener" ref="lockInventoryResponseListener" />
+		<property name="sessionTransacted" value="true" />
+		<property name="concurrentConsumers" value="${inventory.lock.response.consumer.concurrency}" />
+		<property name="autoStartup" value="${inventory.v2.ListenerJmsContainer.autoStartUp:true}" />
+		<property name="sessionAcknowledgeModeName" value="CLIENT_ACKNOWLEDGE" />
+	</bean>
+	
+	<bean id="unlockInventoryRequestListener" class="com.stubhub.domain.inventory.listings.v2.listeners.UnlockInventoryRequestListener" />
+	<bean id="unlockInventoryRequestListenerContainer"
+		class="com.stubhub.domain.infrastructure.messaging.client.jms.SHJMSMessageListenerContainer">
+		<property name="connectionFactory"
+			ref="shActiveMqConsumerConnectionFactory" />
+		<property name="destination" ref="unlockInventoryRequestDest" />
+		<property name="messageListener" ref="unlockInventoryRequestListener" />
+		<property name="sessionTransacted" value="true" />
+		<property name="concurrentConsumers" value="${inventory.unlock.request.consumer.concurrency}" />
+		<property name="autoStartup" value="${inventory.v2.ListenerJmsContainer.autoStartUp:true}" />
+		<property name="sessionAcknowledgeModeName" value="CLIENT_ACKNOWLEDGE" />
+	</bean>
+	
+	<bean id="unlockInventoryResponseListener" class="com.stubhub.domain.inventory.listings.v2.listeners.UnlockInventoryResponseListener" />
+	<bean id="unlockInventoryResponseListenerContainer"
+		class="com.stubhub.domain.infrastructure.messaging.client.jms.SHJMSMessageListenerContainer">
+		<property name="connectionFactory"
+			ref="shActiveMqConsumerConnectionFactory" />
+		<property name="destination" ref="unlockInventoryResponseDest" />
+		<property name="messageListener" ref="unlockInventoryResponseListener" />
+		<property name="sessionTransacted" value="true" />
+		<property name="concurrentConsumers" value="${inventory.unlock.response.consumer.concurrency}" />
+		<property name="autoStartup" value="${inventory.v2.ListenerJmsContainer.autoStartUp:true}" />
+		<property name="sessionAcknowledgeModeName" value="CLIENT_ACKNOWLEDGE" />
+	</bean>
+	
+	<bean id="processPendingListingsForSellerListener" class="com.stubhub.domain.inventory.listings.v2.listeners.ProcessPendingFlashListingsListener" />
+	<bean id="processPendingListingsForSellerContainer"
+		class="com.stubhub.domain.infrastructure.messaging.client.jms.SHJMSMessageListenerContainer">
+		<property name="connectionFactory"
+			ref="shActiveMqConsumerConnectionFactory" />
+		<property name="destination" ref="sellerPendingInventoryDest" />
+		<property name="messageListener" ref="processPendingListingsForSellerListener" />
+		<property name="sessionTransacted" value="true" />
+		<property name="concurrentConsumers" value="${seller.pending.inventory.consumer.concurrency}" />
+		<property name="autoStartup" value="${inventory.v2.ListenerJmsContainer.autoStartUp:true}" />
+		<property name="sessionAcknowledgeModeName" value="CLIENT_ACKNOWLEDGE" />
+	</bean>
+	
+	      <!-- Define inventory status  notification Listener -->
+    <bean id="inventoryStatusNotificationListener" class="com.stubhub.domain.inventory.listings.v2.listeners.InventoryStatusNotificationListener" />
+    <bean id="inventoryStatusNotificationListenerContainer"
+        class="com.stubhub.domain.infrastructure.messaging.client.jms.SHJMSMessageListenerContainer">
+        <property name="connectionFactory"
+            ref="shActiveMqConsumerConnectionFactory" />
+        <property name="destination" ref="inventoryStatusNotificationDest" />
+        <property name="messageListener" ref="inventoryStatusNotificationListener" />
+        <property name="sessionTransacted" value="true" />
+        <property name="concurrentConsumers" value="${inventory.status.notification.consumer.concurrency}" />
+        <property name="autoStartup" value="${inventory.v2.ListenerJmsContainer.autoStartUp:true}" />
+        <property name="sessionAcknowledgeModeName" value="CLIENT_ACKNOWLEDGE" />
+    </bean>
+
+	<!-- Define inventory reset business Listener -->
+	<bean id="inventoryUpdateBusinessListener" class="com.stubhub.domain.inventory.listings.v2.listeners.updateListingBusinessListener" />
+	<bean id="inventoryUpdateBusinessListenerContainer"
+		  class="com.stubhub.domain.infrastructure.messaging.client.jms.SHJMSMessageListenerContainer">
+		<property name="connectionFactory"
+				  ref="shActiveMqConsumerConnectionFactory" />
+		<property name="destination" ref="inventoryUpdateBusinessDest" />
+		<property name="messageListener" ref="inventoryUpdateBusinessListener" />
+		<property name="sessionTransacted" value="true" />
+		<property name="concurrentConsumers" value="${inventory.update.business.consumer.concurrency}" />
+		<property name="autoStartup" value="${inventory.v2.ListenerJmsContainer.autoStartUp:true}" />
+		<property name="sessionAcknowledgeModeName" value="CLIENT_ACKNOWLEDGE" />
+	</bean>
+	
+	<!-- ActiveMQ Producer Connection Factory -->
+	<bean id="shActiveMqProducerConnectionFactory" class="org.apache.activemq.pool.PooledConnectionFactory" destroy-method="stop">
+	  <property name="connectionFactory">
+	    <bean class="org.apache.activemq.ActiveMQConnectionFactory">
+	      <property name="brokerURL">
+	        <value>${pro.common.activeMQ.brokerURL}</value>
+	      </property>
+	    </bean>
+	  </property>
+	</bean>
+	
+	<!-- Define Lock and Unlock Inventory Request Producers -->
+    <bean id="lockInventoryRequestProducer" class="org.springframework.jms.core.JmsTemplate">
+		<property name="connectionFactory">
+		  <ref local="shActiveMqProducerConnectionFactory"/>
+		</property>
+		<property name="defaultDestination">
+			<ref bean="lockInventoryRequestDest" />
+		</property>
+		<property name="messageTimestampEnabled" value="true" />
+		<property name="messageIdEnabled" value="true" />
+	</bean>
+
+	<bean id="unlockInventoryRequestProducer" class="org.springframework.jms.core.JmsTemplate">
+		<property name="connectionFactory">
+			<ref local="shActiveMqProducerConnectionFactory" />
+		</property>
+		<property name="defaultDestination">
+			<ref bean="unlockInventoryRequestDest" />
+		</property>
+		<property name="messageTimestampEnabled" value="true" />
+		<property name="messageIdEnabled" value="true" />
+	</bean>	
+
+	<!-- Define Partner Lock and Unlock Inventory Request Producers -->
+    <bean id="partnerLockInventoryRequestProducer" class="org.springframework.jms.core.JmsTemplate">
+		<property name="connectionFactory">
+		  <ref local="shActiveMqProducerConnectionFactory"/>
+		</property>
+		<property name="defaultDestination">
+			<ref bean="partnerLockInventoryRequestDest" />
+		</property>
+		<property name="messageTimestampEnabled" value="true" />
+		<property name="messageIdEnabled" value="true" />
+	</bean>
+
+	<bean id="partnerUnlockInventoryRequestProducer" class="org.springframework.jms.core.JmsTemplate">
+		<property name="connectionFactory">
+			<ref local="shActiveMqProducerConnectionFactory" />
+		</property>
+		<property name="defaultDestination">
+			<ref bean="partnerUnlockInventoryRequestDest" />
+		</property>
+		<property name="messageTimestampEnabled" value="true" />
+		<property name="messageIdEnabled" value="true" />
+	</bean>	
+	
+</beans>

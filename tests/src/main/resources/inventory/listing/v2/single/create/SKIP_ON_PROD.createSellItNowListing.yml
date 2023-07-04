@@ -1,0 +1,52 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: Create sell it now listing with SRS
+comment: "create listing - electronic barcode"
+id: sellItNow
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:barcodeEvent:java}'
+    payoutPerProduct:
+      amount: 162.00
+      currency: USD
+    attributes:
+      key: SELLITNOW
+      value: true  
+    section: 'SEC{TIMESTAMP}'
+    products:
+      - row: R2
+        seat: S3
+        fulfillmentArtifact: ''
+      - row: R2
+        seat: S4
+        fulfillmentArtifact: ''
+response:
+  code: 200
+---
+type: sql
+comment: get tickets
+verbose: true
+id: getSellItNowValue
+minCount: 1
+username: stub_app
+password: dstub_app
+sql:   select snow_ind from tickets where id=?
+values:
+  - '{sellItNow:response.body.id}'
+rows:
+ -
+  - 1

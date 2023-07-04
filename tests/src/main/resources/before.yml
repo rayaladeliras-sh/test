@@ -1,0 +1,299 @@
+sequence: new
+sequenceName: Prepare inventory test data
+id: notOnProduction
+verbose: true
+type: groovy
+script: |
+  return !InetAddress.getLocalHost().getHostName().endsWith('.stubprod.com')
+---
+enabled: '{notOnProduction:}'
+id: prepareSeller
+include: user/create:withCCAndPaypal
+ccType: Visa
+countryCode: US
+---
+enabled: '{notOnProduction:}'
+id: barcodeEvent
+include: event/create:byDateRange
+fulfillmentMethod: Barcode
+countryCode: US
+startDaysFromNow: 3
+endDaysFromNow: 100
+---
+enabled: '{notOnProduction:}'
+id: barcodePredeliveryOnlyEvent
+include: event/create:barcodeEventByDateRange
+barcodeType: TDC
+countryCode: US
+startDaysFromNow: 0
+endDaysFromNow: 1
+---
+enabled: '{notOnProduction:}'
+id: upsEvent
+include: event/create:byDateRange
+fulfillmentMethod: UPS
+countryCode: US
+startDaysFromNow: 3
+endDaysFromNow: 100
+---
+enabled: '{notOnProduction:}'
+id: pdfEvent
+include: event/create:byDateRange
+fulfillmentMethod: PDF
+countryCode: US
+startDaysFromNow: 3
+endDaysFromNow: 100
+---
+enabled: '{notOnProduction:}'
+id: ukEvent
+include: event/create:byDateRange
+fulfillmentMethod: PDF
+countryCode: GB
+startDaysFromNow: 3
+endDaysFromNow: 100
+---
+enabled: '{notOnProduction:}'
+id: lmsEvent
+include: event/create:byDateRange
+fulfillmentMethod: LMS
+countryCode: US
+startDaysFromNow: 3
+endDaysFromNow: 30
+---
+enabled: '{notOnProduction:}'
+id: flashEvent
+include: event/create:byFulfillmentWindow
+fulfillmentWindow: FlashSeat_PreDelivery-Instant
+countryCode: US
+startDaysFromNow: 3
+endDaysFromNow: 100
+---
+enabled: '{notOnProduction:}'
+id: mobileEvent
+include: event/create:byFulfillmentWindow
+fulfillmentWindow: Mobile_Mobile_Ticket
+countryCode: US
+startDaysFromNow: 3
+endDaysFromNow: 100
+---
+enabled: '{notOnProduction:}'
+id: parkingPassOnlyEvent
+include: event/create:parkingPassOnly
+countryCode: US
+startDaysFromNow: 3
+endDaysFromNow: 100
+---
+enabled: '{notOnProduction:}'
+id: prepareUKSeller
+include: user/create:withCCAndPaypal
+ccType: Visa
+countryCode: GB
+---
+enabled: '{notOnProduction:}'
+id: prepareBuyer
+include: user/create:withoutPayment
+ccType: Visa
+countryCode: US
+---
+enabled: '{notOnProduction:}'
+maxRetries: 3
+id: gettoken
+include: stubhub.iam:web.login
+credentials:
+  username: '{prepareSeller:java.email}'
+  password: '{prepareSeller:java.password}'
+---
+enabled: '{notOnProduction:}'
+maxRetries: 3
+id: getcookie
+include: stubhub.iam:token.init
+sessionId: '{gettoken:response.body.login.session_id}'
+---
+enabled: '{notOnProduction:}'
+maxRetries: 3
+id: getBuyertoken
+include: stubhub.iam:web.login
+credentials:
+  username: '{prepareBuyer:java.email}'
+  password: '{prepareBuyer:java.password}'
+---
+enabled: '{notOnProduction:}'
+maxRetries: 3
+id: getBuyercookie
+include: stubhub.iam:token.init
+sessionId: '{getBuyertoken:response.body.login.session_id}'
+---
+enabled: '{notOnProduction:}'
+maxRetries: 3
+id: getUKtoken
+include: stubhub.iam:web.login
+credentials:
+  username: '{prepareUKSeller:java.email}'
+  password: '{prepareUKSeller:java.password}'
+---
+enabled: '{notOnProduction:}'
+maxRetries: 3
+id: getUKcookie
+include: stubhub.iam:token.init
+sessionId: '{getUKtoken:response.body.login.session_id}'
+---
+enabled: '{notOnProduction:}'
+id: generateDate
+type: java
+class: com.stubhub.global.domain.utils.base.helper.Time
+method: generateDate
+parameters: yyyy-MM-dd HH:mm:ss
+---
+enabled: '{notOnProduction:}'
+id: testCreateTDCBarcodeEvent
+include: event/create:barcodeEventByDate
+barcodeType: TDC
+countryCode: US
+eventDate: '{generateDate:java}'
+---
+enabled: '{notOnProduction:}'
+id: createSAPBarcodeEvent
+include: event/create:barcodeEventByDate
+barcodeType: SAP
+countryCode: GB
+eventDate: '{generateDate:java}'
+---
+enabled: '{notOnProduction:}'
+id: testCreateTMBarcodeEvent
+include: event/create:barcodeEventByDate
+barcodeType: TM
+countryCode: US
+eventDate: '{generateDate:java}'
+---
+enabled: '{notOnProduction:}'
+id: testCreatePACBarcodeEvent
+include: event/create:barcodeEventByDate
+barcodeType: PAC
+countryCode: US
+eventDate: '{generateDate:java}'
+---
+enabled: '{notOnProduction:}'
+id: testCreateAEGBarcodeEvent
+include: event/create:barcodeEventByDate
+barcodeType: AEG
+countryCode: US
+eventDate: '{generateDate:java}'
+---
+enabled: '{notOnProduction:}'
+type: java
+id: randomNum
+class: com.stubhub.test.inventory.RandomNumberGenerator
+method: randomNumbers
+---
+enabled: '{notOnProduction:}'
+type: java
+id: randomNum1
+class: com.stubhub.test.inventory.RandomNumberGenerator
+method: randomNumbers
+---
+enabled: '{notOnProduction:}'
+type: java
+id: randomNum2
+class: com.stubhub.test.inventory.RandomNumberGenerator
+method: randomNumbers
+---
+enabled: '{notOnProduction:}'
+type: java
+id: tdcBarcode
+class: com.stubhub.test.inventory.RandomNumberGenerator
+method: generateRandomBarcodeForTDC
+---
+enabled: '{notOnProduction:}'
+type: java
+id: tdcBarcode1
+class: com.stubhub.test.inventory.RandomNumberGenerator
+method: generateRandomBarcodeForTDC
+---
+enabled: '{notOnProduction:}'
+type: java
+id: tdcBarcode2
+class: com.stubhub.test.inventory.RandomNumberGenerator
+method: generateRandomBarcodeForTDC
+---
+enabled: '{notOnProduction:}'
+type: java
+id: tmBarcode
+class: com.stubhub.test.inventory.RandomNumberGenerator
+method: generateRandomBarcodeForTM
+---
+enabled: '{notOnProduction:}'
+type: java
+id: tmBarcode1
+class: com.stubhub.test.inventory.RandomNumberGenerator
+method: generateRandomBarcodeForTM
+---
+enabled: '{notOnProduction:}'
+type: java
+id: pacBarcode
+class: com.stubhub.test.inventory.RandomNumberGenerator
+method: generateRandomBarcodeForPAC
+---
+enabled: '{notOnProduction:}'
+type: java
+id: aegBarcode
+class: com.stubhub.test.inventory.RandomNumberGenerator
+method: generateRandomBarcodeForAEG
+---
+enabled: '{notOnProduction:}'
+id: shipping
+include: event/create:byDateRange
+fulfillmentMethod: Royal_Mail
+countryCode: GB
+startDaysFromNow: 3
+endDaysFromNow: 100
+---
+enabled: '{notOnProduction:}'
+id: xferEvent
+include: event/create:byFulfillmentWindow
+fulfillmentWindow: External_Mobile_Transfer
+countryCode: US
+startDaysFromNow: 3
+endDaysFromNow: 100
+---
+enabled: '{notOnProduction:}'
+id: upload
+comment: Upload PDF
+request:
+  uri: /fulfillment/pdf/v1/files?eventid={pdfEvent:java}
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Cookie: '{getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{gettoken:response.body.login.csrf_token}'
+    - Content-Type: 'multipart/form-data'
+    - Accept: application/json
+  body:
+    - headers:
+        - Content-Type: application/pdf
+      uploads:
+          - multi_pages_file1.pdf
+---
+enabled: '{notOnProduction:}'
+type: sql
+comment: SQL select user Id
+verbose: true
+id: selectUserId
+minCount: 1
+username: stub_app
+password: dstub_app
+sql: select id from users where default_email = ?
+values:
+  - '{prepareSeller:java.email}'
+---
+enabled: '{notOnProduction:}'
+type: sql
+comment: Add user to user group
+verbose: true
+id: addUserToGroup
+minCount: 1
+sql: |
+    insert into user_group_user_xref select user_group_user_xref_seq.nextval, user_group_id,?,0,1,sysdate,
+    'stub',sysdate,'stub'from user_group where user_group='Josh''s Test Group'
+values:
+  - '{selectUserId:sql.rows[0].id}'

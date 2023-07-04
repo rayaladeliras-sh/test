@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:sec="http://www.springframework.org/schema/security"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:jms="http://www.springframework.org/schema/jms"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="
+        http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.2.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+		http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-2.0.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/jms http://www.springframework.org/schema/jms/spring-jms.xsd
+	    http://www.springframework.org/schema/cache http://www.springframework.org/schema/cache/spring-cache.xsd">
+
+	<bean id="entityCBCacheStore"
+		class="com.stubhub.newplatform.common.cache.store.couchbase.CouchbaseStore"
+		lazy-init="true">
+		<property name="couchBaseGetVauleTimeoutPropertyName"
+			value="com.stubhub.common.cache.store.couchbase.getValueTimeout" />
+		<property name="couchBaseMaxExpiredTimePropertyName"
+			value="com.stubhub.common.cache.store.couchbase.maxExpiredTime" />
+		<property name="bucketName" value="entity" />
+		<property name="cBClient" ref="fraudEntityCouchbaseClient" />
+	</bean>
+
+	<bean id="fraudEntityCouchbaseClient"
+		class="com.couchbase.client.CouchbaseClient">
+		<constructor-arg index="0">
+			<ref bean="shCouchBaseURIs" />
+		</constructor-arg>
+		<constructor-arg index="1" type="java.lang.String"
+			value="entity" />
+		<constructor-arg index="2" type="java.lang.String"
+			value="" />
+	</bean>
+
+	<bean id="delimitterString" class="java.lang.String">
+		<constructor-arg value=" " />
+	</bean>
+
+	<bean id="shCouchBaseURIs"
+		class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+		<property name="staticMethod"
+			value="com.stubhub.domain.inventory.listings.v2.util.CommonUtils.delimitedStringToURI" />
+		<property name="arguments">
+			<list>
+				<value type="java.lang.String">${com.stubhub.common.shared.cache.store.couchbase.hostNameList}</value>
+				<ref bean="delimitterString" />
+				<value type="java.lang.String">http://</value>
+				<value type="java.lang.String">/pools</value>
+			</list>
+		</property>
+	</bean>
+
+	<bean id="fraudEvaluationProducerJmsFactory"
+		class="org.apache.activemq.pool.PooledConnectionFactory"
+		destroy-method="stop">
+		<property name="connectionFactory">
+			<bean class="org.apache.activemq.ActiveMQConnectionFactory">
+				<property name="brokerURL">
+					<value>${pro.common.activeMQ.brokerURL}</value>
+				</property>
+			</bean>
+		</property>
+	</bean>
+
+	<bean id="fraudEvaluationListenerJmsFactory"
+		class="com.stubhub.domain.infrastructure.messaging.client.activemq.SHActiveMQConnectionFactory">
+		<constructor-arg name="producerURL"
+			value="${pro.common.activeMQ.brokerURL}" />
+		<constructor-arg name="consumerURL"
+			value="${dedicated_brokernetwork_url}" />
+		<property name="clientID"
+			value="#{T(java.net.InetAddress).localHost.hostName}" />
+		<property name="clientIDPrefix" value="FRAUD-EVAL-LSTNR" />
+	</bean>
+
+	<bean id="fraudEvaluationMsgDest"
+		class="org.apache.activemq.command.ActiveMQQueue"
+		autowire="constructor">
+		<constructor-arg
+			value="${tns.listing.fraud.evaluation.queue}" />
+	</bean>
+
+	<bean id="fraudEvaluationMsgProducer"
+		class="org.springframework.jms.core.JmsTemplate">
+		<property name="connectionFactory"
+			ref="fraudEvaluationProducerJmsFactory" />
+
+		<property name="defaultDestination">
+			<ref bean="fraudEvaluationMsgDest" />
+		</property>
+		<property name="messageTimestampEnabled" value="true" />
+		<property name="messageIdEnabled" value="true" />
+	</bean>
+
+	<bean id="listingDeactivationQueueName" class="java.lang.String">
+		<constructor-arg
+			value="${tns.listing.fraud.deactivation.queue}" />
+	</bean>
+
+	<bean id="fraudListingDeactivationMsgDest"
+		class="org.apache.activemq.command.ActiveMQQueue"
+		autowire="constructor">
+		<constructor-arg ref="listingDeactivationQueueName" />
+	</bean>
+
+	<bean id="fraudListingDeactivationMsgProducer"
+		class="org.springframework.jms.core.JmsTemplate">
+		<property name="connectionFactory"
+			ref="fraudEvaluationProducerJmsFactory" />
+
+		<property name="defaultDestination">
+			<ref bean="fraudListingDeactivationMsgDest" />
+		</property>
+		<property name="messageTimestampEnabled" value="true" />
+		<property name="messageIdEnabled" value="true" />
+	</bean>
+
+	<bean id="fraudListingDeactivationListener"
+		class="com.stubhub.domain.inventory.listings.v2.tns.FraudListingDeactivationListener" />
+
+	<bean id="fraudListingDeactivationListenerJmsContainer"
+		class="com.stubhub.domain.infrastructure.messaging.client.jms.SHJMSMessageListenerContainer">
+		<property name="connectionFactory"
+			ref="fraudEvaluationListenerJmsFactory" />
+		<property name="destination"
+			ref="fraudListingDeactivationMsgDest" />
+		<property name="messageListener"
+			ref="fraudListingDeactivationListener" />
+		<property name="autoStartup" value="true" />
+		<property name="concurrentConsumers"
+			value="${tns.listing.fraud.evaluation.consumer.concurrency}" />
+	</bean>
+
+	<bean id="fraudEvaluationListingUpdateMsgDest"
+		class="org.apache.activemq.command.ActiveMQQueue"
+		autowire="constructor">
+		<constructor-arg
+			value="${tns.listing.fraud.evaluation.outgoing.queue}" />
+	</bean>
+
+	<bean id="fraudEvaluationListingUpdateListener"
+		class="com.stubhub.domain.inventory.listings.v2.tns.FraudEvaluationListingUpdateListener" />
+
+	<bean id="fraudEvaluationListingUpdateListenerJmsContainer"
+		class="com.stubhub.domain.infrastructure.messaging.client.jms.SHJMSMessageListenerContainer">
+		<property name="connectionFactory"
+			ref="fraudEvaluationListenerJmsFactory" />
+		<property name="destination"
+			ref="fraudEvaluationListingUpdateMsgDest" />
+		<property name="messageListener"
+			ref="fraudEvaluationListingUpdateListener" />
+		<property name="autoStartup" value="true" />
+		<property name="concurrentConsumers"
+			value="${tns.listing.fraud.evaluation.consumer.concurrency}" />
+	</bean>
+
+	<bean id="fraudEvaluationListingEmailMsgDest"
+		class="org.apache.activemq.command.ActiveMQQueue"
+		autowire="constructor">
+		<constructor-arg
+			value="${tns.listing.fraud.evaluation.sendmail.queue}" />
+	</bean>
+
+	<bean id="fraudEvaluationListingEmailListener"
+		class="com.stubhub.domain.inventory.listings.v2.tns.FraudListingEmailListener" />
+
+	<bean id="fraudEvaluationListingEmailListenerJmsContainer"
+		class="com.stubhub.domain.infrastructure.messaging.client.jms.SHJMSMessageListenerContainer">
+		<property name="connectionFactory"
+			ref="fraudEvaluationListenerJmsFactory" />
+		<property name="destination"
+			ref="fraudEvaluationListingEmailMsgDest" />
+		<property name="messageListener"
+			ref="fraudEvaluationListingEmailListener" />
+		<property name="autoStartup" value="true" />
+		<property name="concurrentConsumers"
+			value="${tns.listing.fraud.evaluation.consumer.concurrency}" />
+	</bean>
+
+</beans>

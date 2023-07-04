@@ -1,0 +1,97 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: Update listing - Adjust price
+id: updateAdjustprice
+request:
+ uri: /inventory/listings/v2
+ method: POST
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+ body:
+   eventId: '{static:upsEvent:java}'
+   pricePerProduct:
+     amount: 19.0
+     currency: USD
+   section: 'SEC{TIMESTAMP}'
+   deliveryOption: UPS
+   products:
+     - row: R11
+       seat: S1
+       productType: ticket
+response:
+ code: 200
+ status: ACTIVE
+---
+comment: "Update Listing - adjust price"
+request:
+ uri: /inventory/listings/v2/{updateAdjustprice:response.body.id}
+ method: PUT
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+ body:
+    pricePerProduct:
+      amount: 4.00
+      currency: USD
+    adjustPrice: true
+response:
+ code: 200
+ status: ACTIVE
+ id: '{static:updateAdjustprice:response.body.id}'
+---
+comment: "Get Listing - adjust price"
+request:
+ uri: /inventory/listings/v2/{updateAdjustprice:response.body.id}
+ method: GET
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+ code: 200
+ status: ACTIVE
+ id: '{updateAdjustprice:response.body.id}'
+ pricePerProduct:
+   amount: 6
+   currency: USD
+---
+comment: "Update Listing - adjust price old flow"
+request:
+ uri: /inventory/listings/v2/{updateAdjustprice:response.body.id}
+ method: PUT
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+ body:
+    pricePerProduct:
+      amount: 3.00
+      currency: USD
+    adjustPrice: true
+response:
+ code: 200
+ status: ACTIVE
+ id: '{static:updateAdjustprice:response.body.id}'
+---
+comment: "Get Listing - adjust price"
+request:
+ uri: /inventory/listings/v2/{updateAdjustprice:response.body.id}
+ method: GET
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+ code: 200
+ status: ACTIVE
+ id: '{updateAdjustprice:response.body.id}'
+ pricePerProduct:
+   amount: 6
+   currency: USD

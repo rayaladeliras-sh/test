@@ -1,0 +1,90 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: Create Instant barcode listing with SRS without barcode
+type: java
+id: tdcInstantBarcode
+class: com.stubhub.test.inventory.RandomNumberGenerator
+method: generateRandomBarcodeForTDC
+---
+comment: "create listing"
+id: createInstantBarcodeTDC
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:testCreateTDCBarcodeEvent:java}'
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    products:
+        row: R1
+        seat: '{static:randomNum2:java}'
+        fulfillmentArtifact: '{tdcInstantBarcode:java}'
+response:
+  code: 200
+  status: PENDING | ACTIVE
+---
+type: sql
+comment: Make it predelivered
+verbose: true
+minCount: 1
+sql: update tickets set DELIVERY_OPTION_ID=1,DATE_LAST_MODIFIED=SYSDATE where id= ?
+values:
+  - '{createInstantBarcodeTDC:response.body.id}'
+---
+id: getListing
+comment: "Get Listing - Valid"
+request:
+  uri: /inventory/listings/v2/{createInstantBarcodeTDC:response.body.id}
+  method: GET
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+  code: 200
+  status: PENDING | ACTIVE
+  id: '{createInstantBarcodeTDC:response.body.id}'
+  deliveryOption: BARCODE
+  preDelivered: true
+---
+type: java
+id: jmxSetUnlockExludedSeller
+verbose: true
+class: "com.stubhub.test.platform.jmx.ConsoleAdapter"
+method: request
+parameters: 
+  - role: slx
+  - multiBlades: true
+  - action: invokeOp
+  - methodName: 'setProperty'
+  - name: 'inventoryv2-service:name=CentralizedMbean'
+  - methodIndex: 5
+  - arg0: 'unlock.excluded.users'
+  - arg1: '{getListing:response.body.sellerId}'
+---
+comment: "Update Listing - status"
+request:
+ uri: /inventory/listings/v2/{createInstantBarcodeTDC:response.body.id}
+ method: PUT
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+ body:
+   status: DELETED
+response:
+ code: 200
+ status: DELETED
+ id: '{deleteInstantBarcode:response.body.id}'

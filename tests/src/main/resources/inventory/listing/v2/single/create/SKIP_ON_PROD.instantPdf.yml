@@ -1,0 +1,55 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: Create Instant PDF listing with Parking pass
+id: instantPdf
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:pdfEvent:java}'
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    deliveryOption: PDF
+    products:
+      - row: R1
+        seat: S2
+        fulfillmentArtifact: '{static:upload:response.body.files.fileInfo[0].fileInfoId}'
+      - row: R1
+        seat: S3
+        fulfillmentArtifact: '{static:upload:response.body.files.fileInfo[1].fileInfoId}'
+        productType: parking_pass
+response:
+  code: 200
+  status: ACTIVE
+---
+comment: "Get Listing - Instant PDF - Parking pass"
+request:
+  uri: /inventory/listings/v2/{instantPdf:response.body.id}
+  method: GET
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+  code: 200
+  status: ACTIVE
+  id: '{instantPdf:response.body.id}'
+  preDelivered: true
+  ticketTraits:
+    0:
+      id: 102
+      name: Parking pass
+      type: Ticket Feature

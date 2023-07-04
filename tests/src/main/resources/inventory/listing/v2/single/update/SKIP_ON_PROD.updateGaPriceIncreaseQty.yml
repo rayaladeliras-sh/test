@@ -1,0 +1,87 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: GA - Update Price and Increase quantity
+comment: "GA - Update Price and Increase quantity"
+id: updateGaPriceIncreaseQty
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:pdfEvent:java}'
+    deliveryOption: PDF
+    pricePerProduct:
+      amount: 20.0
+      currency: USD
+    quantity: 2
+response:
+  code: 200
+---
+comment: "Updating listing - price and qty"
+request:
+  uri: /inventory/listings/v2/{updateGaPriceIncreaseQty:response.body.id}
+  method: PUT
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    payoutPerProduct:
+      amount: 119.0
+      currency: USD
+    quantity: 3
+response:
+  code: 200
+---
+comment: "Get Listing - Valid"
+request:
+  uri: /inventory/listings/v2/{updateGaPriceIncreaseQty:response.body.id}
+  method: GET
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+  code: 200
+  status: ACTIVE
+  id: '{updateGaPriceIncreaseQty:response.body.id}'
+  pricePerProduct:
+    amount: 132.22
+    currency: USD
+  quantity: 3
+  quantityRemain: 3
+---
+comment: "Updating listing - qty old flow"
+request:
+  uri: /inventory/listings/v2/{updateGaPriceIncreaseQty:response.body.id}
+  method: PUT
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    quantity: 4
+response:
+  code: 200
+---
+comment: "Get Listing - Valid"
+request:
+  uri: /inventory/listings/v2/{updateGaPriceIncreaseQty:response.body.id}
+  method: GET
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+  code: 200
+  status: ACTIVE
+  id: '{updateGaPriceIncreaseQty:response.body.id}'
+  quantity: 4
+  quantityRemain: 4

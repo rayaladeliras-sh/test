@@ -1,0 +1,86 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: Create Listing
+comment: "Create Listing for Update Split Option"
+id: createListingV2
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:upsEvent:java}'
+    deliveryOption: UPS
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: '{static:randomNum:java}'
+    products:
+      - row: PR1
+        seat: 1
+        operation: ADD
+        productType: TICKET
+      - row: PR1
+        seat: 2
+        operation: ADD
+        productType: TICKET
+      - row: PR1
+        seat: 3
+        operation: ADD
+        productType: TICKET
+      - row: PR1
+        seat: 4
+        operation: ADD
+        productType: TICKET       
+response:
+  code: 200
+---
+comment: "Update SplitOption Multiples"
+id: updateSplitOptionMultiples
+request:
+  uri: /inventory/listings/v2/{createListingV2:response.body.id}
+  method: PUT
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    splitOption: MULTIPLES
+    splitQuantity: 2
+response:
+  code: 200
+---
+comment: "Update SplitOption NoSingles"
+id: updateSplitOptionNoSingles
+request:
+  uri: /inventory/listings/v2/{createListingV2:response.body.id}
+  method: PUT
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    splitOption: NOSINGLES
+response:
+  code: 200
+---
+comment: "Update SplitOption None"
+id: updateSplitOptionNone
+request:
+  uri: /inventory/listings/v2/{createListingV2:response.body.id}
+  method: PUT
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    splitOption: NONE
+response:
+  code: 200

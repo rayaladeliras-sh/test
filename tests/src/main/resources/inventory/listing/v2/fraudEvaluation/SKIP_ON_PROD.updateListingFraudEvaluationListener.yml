@@ -1,0 +1,310 @@
+dependsOn:
+  - name: inventory/listing/v2/fraudEvaluation/SKIP_ON_PROD.createListingFraudEvaluationQueue
+---
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: updateListingFraudEvaluation
+id: prepareEvent
+include: event/create:byDateRange
+fulfillmentMethod: UPS
+countryCode: US
+startDaysFromNow: 10
+endDaysFromNow: 100
+---
+id: prepareSeller
+include: user/create:withCCAndPaypal
+ccType: Visa
+countryCode: US
+---
+id: disableFraudEvaluation
+type: java
+verbose: true
+class: "com.stubhub.test.platform.jmx.ConsoleAdapter"
+method: request
+enabled: "{EXPR:!'{ENV}'.startsWith('lvsp')}"
+parameters: 
+  - role: slx
+  - multiBlades: true
+  - action: invokeOp
+  - methodName: 'setProperty'
+  - name: 'inventoryv2-service:name=SHConfig'
+  - methodIndex: 7
+  - arg0: 'tns.listing.evaluation.new.flow.enabled'
+  - arg1: 'false'
+---
+type: sql
+comment: Disable the old lisitng flow
+verbose: true
+minCount: 1
+maxCount: 1
+sql: update system_settings set value = 'FALSE' where name in ('tns.listing.event.enabled')
+---
+id: createListing1
+include: listing/create:normal
+eventId: '{prepareEvent:java}'
+sellerEmail: '{prepareSeller:java.email}'
+sellerPassword: '{prepareSeller:java.password}'
+quantity: 2
+fulfillmentMethod: PDF
+price: '18.5'
+isGA: 'false'
+---
+type: java
+verbose: true
+class: java.lang.Thread
+method: sleep
+parameters: 100000
+---
+id: listingUpdatePublish1
+type: java
+class: com.stubhub.test.inventory.ActiveMQTrigger
+method: publishToQueue
+parameters:
+  - '{ENV}'
+  - 'tns.fraud.listingeval.outgoing.queue'
+  - {listingId: '{createListing1:java}',sellerId: '{prepareSeller:java.id}',fraudCheckStatusId: '500',fraudResolutionId: '26',isSellerDeactivated: 'false'}
+---
+id: listingEmailPublish1
+type: java
+class: com.stubhub.test.inventory.ActiveMQTrigger
+method: publishToQueue
+parameters:
+  - '{ENV}'
+  - 'tns.fraud.listingeval.sendmail.queue'
+  - {listingId: '{createListing1:java}',sellerId: '{prepareSeller:java.id}',fraudCheckStatusId: '500',fraudResolutionId: '26',isSellerDeactivated: 'false'}
+---
+type: java
+verbose: true
+class: java.lang.Thread
+method: sleep
+parameters: 30000
+---
+type: sql
+comment: Check Ticket for Listng Update1
+verbose: true
+minCount: 1
+maxCount: 1
+sql: select id,seller_id,fraud_check_status_id,fraud_resolution_id from tickets where id= {createListing1:java} and seller_id= {prepareSeller:java.id} and fraud_resolution_id = 26 and fraud_check_status_id = 500
+---
+id: createListing2
+include: listing/create:normal
+eventId: '{prepareEvent:java}'
+sellerEmail: '{prepareSeller:java.email}'
+sellerPassword: '{prepareSeller:java.password}'
+quantity: 2
+fulfillmentMethod: PDF
+price: '18.5'
+isGA: 'false'
+---
+id: listingUpdatePublish2
+type: java
+class: com.stubhub.test.inventory.ActiveMQTrigger
+method: publishToQueue
+parameters:
+  - '{ENV}'
+  - 'tns.fraud.listingeval.outgoing.queue'
+  - {listingId: '{createListing2:java}',sellerId: '{prepareSeller:java.id}',fraudCheckStatusId: '1000',fraudResolutionId: '26',isSellerDeactivated: 'false'}
+---
+type: java
+verbose: true
+class: java.lang.Thread
+method: sleep
+parameters: 30000
+---
+type: sql
+comment: Check Tickets for Listng Update 2
+verbose: true
+minCount: 1
+maxCount: 1
+sql: select id,seller_id,fraud_check_status_id,fraud_resolution_id from tickets where id= ? and seller_id= ? and fraud_resolution_id = ? and fraud_check_status_id = ? and LISTING_DEACTIVATION_REASON_ID = ?  and SYSTEM_STATUS = ?
+values:
+  - '{createListing2:java}'
+  - '{prepareSeller:java.id}'
+  - 26
+  - 1000
+  - 20
+  - 'INACTIVE'
+---
+id: prepareSeller1
+include: user/create:withCCAndPaypal
+ccType: Visa
+countryCode: US
+---
+id: createListing3
+include: listing/create:normal
+eventId: '{prepareEvent:java}'
+sellerEmail: '{prepareSeller1:java.email}'
+sellerPassword: '{prepareSeller1:java.password}'
+quantity: 2
+fulfillmentMethod: PDF
+price: '18.5'
+isGA: 'false'
+---
+id: createListing4
+include: listing/create:normal
+eventId: '{prepareEvent:java}'
+sellerEmail: '{prepareSeller1:java.email}'
+sellerPassword: '{prepareSeller1:java.password}'
+quantity: 2
+fulfillmentMethod: PDF
+price: '18.5'
+isGA: 'false'
+---
+id: createListing5
+include: listing/create:normal
+eventId: '{prepareEvent:java}'
+sellerEmail: '{prepareSeller1:java.email}'
+sellerPassword: '{prepareSeller1:java.password}'
+quantity: 2
+fulfillmentMethod: PDF
+price: '18.5'
+isGA: 'false'
+---
+id: listingUpdatePublish3
+type: java
+class: com.stubhub.test.inventory.ActiveMQTrigger
+method: publishToQueue
+parameters:
+  - '{ENV}'
+  - 'tns.fraud.listingeval.outgoing.queue'
+  - {listingId: '{createListing4:java}',sellerId: '{prepareSeller1:java.id}',fraudCheckStatusId: '1000',fraudResolutionId: '26',isSellerDeactivated: 'true'}
+---
+type: java
+verbose: true
+class: java.lang.Thread
+method: sleep
+parameters: 60000
+---
+type: sql
+comment: Check Tickets for Listng Update 4
+verbose: true
+minCount: 1
+maxCount: 1
+sql: select id,seller_id,fraud_check_status_id,fraud_resolution_id from tickets where id= ? and seller_id= ? and fraud_resolution_id = ? and fraud_check_status_id = ? and LISTING_DEACTIVATION_REASON_ID = ?  and SYSTEM_STATUS = ?
+values:
+  - '{createListing4:java}'
+  - '{prepareSeller1:java.id}'
+  - 26
+  - 1000
+  - 20
+  - 'INACTIVE'
+---
+type: sql
+comment: Check Tickets for Listng Update 3
+verbose: true
+minCount: 1
+maxCount: 1
+sql: select id,seller_id,fraud_check_status_id,fraud_resolution_id from tickets where id= ? and seller_id= ? and LISTING_DEACTIVATION_REASON_ID = ?  and SYSTEM_STATUS = ?
+values:
+  - '{createListing3:java}'
+  - '{prepareSeller1:java.id}'
+  - 10
+  - 'INACTIVE'
+---
+type: sql
+comment: Check Tickets for Listng Update 5
+verbose: true
+minCount: 1
+maxCount: 1
+sql: select id,seller_id,fraud_check_status_id,fraud_resolution_id from tickets where id= ? and seller_id= ? and LISTING_DEACTIVATION_REASON_ID = ?  and SYSTEM_STATUS = ?
+values:
+  - '{createListing5:java}'
+  - '{prepareSeller1:java.id}'
+  - 10
+  - 'INACTIVE'
+---
+id: prepareSeller2
+include: user/create:withCCAndPaypal
+ccType: Visa
+countryCode: US
+---
+id: createListing6
+include: listing/create:normal
+eventId: '{prepareEvent:java}'
+sellerEmail: '{prepareSeller2:java.email}'
+sellerPassword: '{prepareSeller2:java.password}'
+quantity: 2
+fulfillmentMethod: PDF
+price: '18.5'
+isGA: 'false'
+---
+id: listingUpdatePublish4
+type: java
+class: com.stubhub.test.inventory.ActiveMQTrigger
+method: publishToQueue
+parameters:
+  - '{ENV}'
+  - 'tns.fraud.listingeval.outgoing.queue'
+  - {listingId: '{createListing6:java}',sellerId: '{prepareSeller2:java.id}',fraudCheckStatusId: '1000',fraudResolutionId: '26',isSellerDeactivated: 'true'}
+---
+type: java
+verbose: true
+class: java.lang.Thread
+method: sleep
+parameters: 60000
+---
+type: sql
+comment: Check Tickets for Listng Update 6
+verbose: true
+minCount: 1
+maxCount: 1
+sql: select id,seller_id,fraud_check_status_id,fraud_resolution_id from tickets where id= ? and seller_id= ? and fraud_resolution_id = ? and fraud_check_status_id = ? and LISTING_DEACTIVATION_REASON_ID = ?  and SYSTEM_STATUS = ?
+values:
+  - '{createListing6:java}'
+  - '{prepareSeller2:java.id}'
+  - 26
+  - 1000
+  - 20
+  - 'INACTIVE'
+---
+id: prepareSeller3
+include: user/create:withCCAndPaypal
+ccType: Visa
+countryCode: US
+---
+id: createListing7
+include: listing/create:normal
+eventId: '{prepareEvent:java}'
+sellerEmail: '{prepareSeller3:java.email}'
+sellerPassword: '{prepareSeller3:java.password}'
+quantity: 2
+fulfillmentMethod: PDF
+price: '18.5'
+isGA: 'false'
+---
+id: listingUpdatePublish7
+type: java
+class: com.stubhub.test.inventory.ActiveMQTrigger
+method: publishToQueue
+parameters:
+  - '{ENV}'
+  - 'tns.fraud.listingeval.outgoing.queue'
+  - {listingId: '{createListing7:java}',sellerId: '{prepareSeller3:java.id}',fraudCheckStatusId: '300',fraudResolutionId: '26',isSellerDeactivated: 'false'}
+---
+type: java
+verbose: true
+class: java.lang.Thread
+method: sleep
+parameters: 30000
+---
+type: sql
+comment: Check Tickets for Listng Update1
+verbose: true
+minCount: 1
+maxCount: 1
+sql: select id,seller_id,fraud_check_status_id,fraud_resolution_id from tickets where id= ? and seller_id= ? and fraud_resolution_id = ? and fraud_check_status_id = ?
+values:
+  - '{createListing7:java}'
+  - '{prepareSeller3:java.id}'
+  - '26'
+  - '300'
+---

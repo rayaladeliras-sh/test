@@ -1,0 +1,160 @@
+<configuration debug="true">
+
+    <property name="defaultPattern"
+              value="%d [%X{com-stubhub-dye}] priority=%-5level app_name=%X{com-stubhub-app-name} thread=%t location=%c{0} line=%L %msg%n%ex" />
+    <property name="jboss.server.log.dir" value="./log" />
+    <!-- expose Mbean -->
+    <contextName>stubhub.logback</contextName>
+    <!--
+    <jmxConfigurator />
+    -->
+
+    <!-- daily rollover -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${jboss.server.log.dir}/jboss.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${jboss.server.log.dir}/jboss.log.%d{yyyy-MM-dd}</fileNamePattern>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${defaultPattern}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- rolling by file size per date-->
+    <appender name="FILE_SIZE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${jboss.server.log.dir}/jboss.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- daily rollover -->
+            <fileNamePattern>${jboss.server.log.dir}/jboss.log.%d{yyyy-MM-dd}.%i</fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>4GB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${defaultPattern}</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>100000</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>true</includeCallerData>
+        <appender-ref ref="FILE_SIZE"/>
+    </appender>
+
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d [%X{com-stubhub-dye}] priority=%-5p app_name=%X{com-stubhub-app-name} thread=%t location=%c{0} line=%L %m%n
+            </pattern>
+        </encoder>
+    </appender>
+
+    <appender name="JMX.SECURITY" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${jboss.server.log.dir}/jboss-jmx-secure-access.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- daily rollover -->
+            <fileNamePattern>${jboss.server.log.dir}/jboss-jmx-secure-access.log.%d{yyyy-MM-dd}</fileNamePattern>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${defaultPattern}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- appender for ups qv response -->
+    <appender name="UPSQVResponse" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${jboss.server.log.dir}/upsqvresponse.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- daily rollover -->
+            <fileNamePattern>${jboss.server.log.dir}/upsqvresponse.log.%d{yyyy-MM-dd}</fileNamePattern>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${defaultPattern}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- appender for zvdatapush -->
+    <appender name="ZVDATAPUSH" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${jboss.server.log.dir}/jboss.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${jboss.server.log.dir}/jboss.log.%d{yyyy-MM-dd}</fileNamePattern>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d [%X{com-stubhub-dye}] priority=%-5level app_name=%X{com-stubhub-app-name} thread=%t location=%c{0} line=%L %msg zvdp_source=%X{source} transaction_id=%X{transaction_id}%n%ex</pattern>
+        </encoder>
+    </appender>
+
+
+    <logger name="org.jboss.security.auth.spi.LdapExtLoginModule" additivity="false" level="TRACE">
+        <appender-ref ref="JMX.SECURITY"/>
+    </logger>
+    <logger name="org.jboss.jmx.adaptor.html.HtmlAdaptorServlet" additivity="false" level="TRACE">
+        <appender-ref ref="JMX.SECURITY"/>
+    </logger>
+
+    <logger name="org.apache" level="INFO"></logger>
+    <logger name="org.apache.ftpserver.listener.nio.FtpLoggingFilter" level="WARN"></logger>
+    <logger name="com.stubhub.autobulk.ftp.AutobulkFTPServer" level="DEBUG"></logger>
+    <logger name="com.stubhub.autobulk.ftp.AutobulkFTPServerImpl" level="DEBUG"></logger>
+
+    <logger name="com.stubhub.inventory.business.facade.impl.FileAdapterFacadeImpl" level="DEBUG"></logger>
+
+    <logger name="com.stubhub.ui.pages.BulkUpload" level="DEBUG"></logger>
+
+    <logger name="com.stubhub.autobulk.ftp.AutobulkFtplet" level="DEBUG"></logger>
+
+    <!-- Limit the org.quartz category to INFO as its DEBUG is verbose -->
+    <logger name="org.quartz" level="DEBUG"></logger>
+
+    <!-- Limit ActiveMQ FailoverTransport category to WARN as too many reconnect messages -->
+    <logger name="org.apache.activemq.transport.failover.FailoverTransport" level="WARN"></logger>
+
+    <!-- Limit JBoss categories -->
+    <logger name="org.jboss" level="INFO"></logger>
+
+    <!-- Limit the JSR77 categories -->
+    <logger name="org.jboss.management" level="INFO"></logger>
+
+    <!-- Limit the org.jboss.serial (jboss-serialization) to INFO as its DEBUG is verbose -->
+    <logger name="org.jboss.serial" level="INFO"></logger>
+
+    <!-- Limit the com.ebay.sdk.handler category to WARN as its INFO is verbose -->
+    <!-- for adcommerce service -->
+    <logger name="com.ebay.sdk.handler" level="WARN"></logger>
+
+
+    <logger name="com.stubhub.framework.commands.database.JDBCCommand" level="INFO"></logger>
+
+    <logger name="com.stubhub.dye" level="DEBUG"></logger>
+
+    <!-- ======================= -->
+    <!-- Category/Logger Binding -->
+    <!-- ======================= -->
+
+    <logger name="com.stubhub.ui.services.StubHubModule" additivity="true" level="INFO"></logger>
+
+    <logger name="com.stubhub.lcsmaster.seda.StageManager" additivity="true" level="DEBUG"></logger>
+
+    <!-- for ups qv response log -->
+    <logger name="UPSQVResponse" additivity="false" level="DEBUG">
+        <appender-ref ref="UPSQVResponse"/>
+    </logger>
+
+    <!-- for zvdatapush log -->
+    <logger name="com.stubhub.domain.catalog.app.datapush.zvents" additivity="false" level="INFO">
+        <appender-ref ref="ZVDATAPUSH"/>
+    </logger>
+
+    <!-- Limit cxf LoggingInInterceptor, resubmit to trigger the code review -->
+    <logger name="org.apache.cxf.interceptor.LoggingOutInterceptor" level="WARN"></logger>
+
+    <!-- ======================= -->
+    <!-- Add for logging api project -->
+    <!-- ======================= -->
+    <logger name="CSL" level="ALL"/>
+
+    <root level="INFO">
+        <appender-ref ref="ASYNC" />
+        <appender-ref ref="CONSOLE" />
+    </root>
+</configuration>

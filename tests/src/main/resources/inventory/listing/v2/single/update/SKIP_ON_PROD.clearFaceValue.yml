@@ -1,0 +1,49 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: Clear face value
+comment: "Clear Face Value"
+id: clearFaceValue
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:upsEvent:java}'
+    deliveryOption: UPS
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    faceValue:
+      amount: 19.0
+      currency: USD
+    section: '{static:randomNum:java}'
+    products:
+      row: R1
+      seat: S1
+response:
+  code: 200
+---
+comment: "Updating listing - face value"
+request:
+  uri: /inventory/listings/v2/{clearFaceValue:response.body.id}
+  method: PUT
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    faceValue:
+      amount: 0
+      currency: USD
+response:
+  code: 200

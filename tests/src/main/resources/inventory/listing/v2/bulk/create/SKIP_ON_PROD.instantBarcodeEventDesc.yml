@@ -1,0 +1,68 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: create bulk listing - Instant Barcode with event Desc
+id: createBulkEventDescInstantBarcode
+request:
+ uri: /inventory/listings/v2/bulk
+ method: POST
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+ body:
+  listings:
+    - eventId: '{static:testCreateTDCBarcodeEvent:java}'
+      pricePerProduct:
+        amount: 119.0
+        currency: USD
+      section: 'SEC{TIMESTAMP}'
+      deliveryOption: BARCODE
+      externalListingId: 'EXT_{TIMESTAMP}_0'
+      products:
+        - row: BR5
+          seat: S1
+          productType: ticket
+          fulfillmentArtifact: '{static:tdcBarcode:java}'
+response:
+ code: 200
+ jobGuid: '{regexp:[0-9]+}'
+---
+type: java
+verbose: true
+class: java.lang.Thread
+method: sleep
+parameters: 60000
+---
+id: callJobService3
+request:
+ uri: /inventory/listings/v2/bulk/{createBulkEventDescInstantBarcode:response.body.jobGuid}
+ method: GET
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+ code: 200
+ jobGuid: '{createBulkEventDescInstantBarcode:response.body.jobGuid}'
+ status: COMPLETED
+ numberOfProcessedListings: 1
+ numberOfInputListings: 1
+---
+comment: "Get Listing - Valid"
+request:
+  uri: /inventory/listings/v2/{callJobService3:response.body.listings[0].listingId}
+  method: GET
+  headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+  code: 200
+  status: ACTIVE
+  predelivered: true

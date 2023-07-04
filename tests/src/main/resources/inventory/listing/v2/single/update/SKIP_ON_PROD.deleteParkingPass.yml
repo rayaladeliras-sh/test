@@ -1,0 +1,72 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: Delete parking pass from a predelivered barcode listing
+type: java
+id: tmBarcode1
+class: com.stubhub.test.inventory.RandomNumberGenerator
+method: generateRandomBarcodeForTM  
+---
+type: java
+id: tmBarcode2
+class: com.stubhub.test.inventory.RandomNumberGenerator
+method: generateRandomBarcodeForTM  
+---
+id: createListing
+request:
+ uri: /inventory/listings/v2
+ method: POST
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+ body:
+   eventId: '{static:testCreateTMBarcodeEvent:java}'
+   pricePerProduct:
+     amount: 19.0
+     currency: USD
+   section: 'SEC{TIMESTAMP}'
+   deliveryOption: BARCODE
+   products:
+     - row: RR9
+       seat: SS11
+       productType: TICKET
+       fulfillmentArtifact: '{tmBarcode1:java}'
+     - row: LOT
+       seat: 1
+       productType: PARKING_PASS
+       fulfillmentArtifact: '{tmBarcode2:java}'
+response:
+ code: 200
+ status: PENDING | ACTIVE
+---
+type: java
+verbose: true
+class: java.lang.Thread
+method: sleep
+parameters: 10000
+---
+comment: "Remove parking pass"
+request:
+ uri: /inventory/listings/v2/{createListing:response.body.id}
+ method: PUT
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+ body:
+    products:
+      - row: LOT
+        seat: 1
+        productType: PARKING_PASS
+        operation: DELETE
+response:
+ code: 200
+ status: PENDING
+ id: '{createListing:response.body.id}'

@@ -1,0 +1,95 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: http
+  subDomain: api-int
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: Update Listing Block
+id: addUserCC
+include: user/update:addCreditCard
+email: api_us_sell_indy03@testmail.com
+password: password
+ccType: Visa
+countryCode: US
+---
+id: addPaypal
+include: user/update:addPaypal
+email: api_us_sell_indy03@testmail.com
+password: password
+countryCode: US
+---
+id: electronic
+request:
+ uri: /inventoryv2/listings/v2
+ method: POST
+ headers:
+   - assertion: eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiWmpsa09UVXdNekl3TUdFeFpqZ3hNelUyTkRCa01qY3dNVEkyTVRJME5UaGhNekE1TXpSa01BPT0iLCJraWQiOiJ3c28yY2FyYm9uIn0=.eyJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC9hcGljb250ZXh0IjoiXC9vYXV0aDJcL2Fzc2VydGlvblwvdjEiLCJzdWIiOiJDNzc5OTE1NTc5RkQ1RTE0RTA0NDAwMjEyODYxQjI1NiIsImh0dHA6XC9cL3N0dWJodWIuY29tXC9jbGFpbXNcL2FwcGxpY2F0aW9uaWQiOiI1MDYiLCJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC9lbmR1c2VyaWQiOiIxMDAwMDAwMDAyIiwiaHR0cDpcL1wvc3R1Ymh1Yi5jb21cL2NsYWltc1wvYXBwbGljYXRpb25uYW1lIjoiRGVmYXVsdEFwcGxpY2F0aW9uIiwidXNlcl9uYW1lIjoiYXBpX3VzX3NlbGxfaW5keTAzQHRlc3RtYWlsLmNvbSIsImlzcyI6Imh0dHA6XC9cL3dzbzIub3JnXC9wcm9kdWN0c1wvYW0iLCJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC90bXJlZmlkIjoibnVsbCIsImNsaWVudF9pZCI6ImlYeWhZT1I2cEpsOVR0WXlZU3pvaUJYaUI2c2EiLCJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC90aWVyIjpudWxsLCJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC9pc2d1ZXN0IjoiZmFsc2UiLCJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC91c2VydHlwZSI6IkFQUExJQ0FUSU9OX1VTRVIiLCJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC9lbmR1c2VyIjoiYXBpX3VzX3NlbGxfaW5keTAzQHRlc3RtYWlsLmNvbSIsInNjb3BlIjpbImRlZmF1bHQiXSwiZXhwIjoxNTcwNjcyOTM2LCJpYXQiOjE1NTUxMjA5MzYsImp0aSI6ImIwOGVjY2RlLTZjOTMtNGVkOC04ZmY0LWIzYzZmNjZiMTU1OSIsImh0dHA6XC9cL3N0dWJodWIuY29tXC9jbGFpbXNcL3N1YnNjcmliZXIiOiJBcGlfVUtfc2VsbF9idXllcjIwIiwiaHR0cDpcL1wvc3R1Ymh1Yi5jb21cL2NsYWltc1wvZW5kdXNlclRlbmFudElkIjoiLTEyMzQiLCJhdWQiOlsiYXBpOlwvXC9zdHViaHViIl0sImh0dHA6XC9cL3N0dWJodWIuY29tXC9jbGFpbXNcL3Nlc3Npb25pZCI6IkYxRERCNEIxRTMwMzQ4OUY4QkMxODJBQzk0RkEwNkEzIiwiaHR0cDpcL1wvc3R1Ymh1Yi5jb21cL2NsYWltc1wvYXBwbGljYXRpb250aWVyIjoiVW5saW1pdGVkIiwiaHR0cDpcL1wvc3R1Ymh1Yi5jb21cL2NsYWltc1wvdmVyc2lvbiI6InYxIiwiaHR0cDpcL1wvc3R1Ymh1Yi5jb21cL2NsYWltc1wvZ3JhbnR0eXBlIjoicGFzc3dvcmQiLCJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6XC9cL3N0dWJodWIuY29tXC9jbGFpbXNcL2VuZHVzZXJndWlkIjoiQzc3OTkxNTU3OUZENUUxNEUwNDQwMDIxMjg2MUIyNTYifQ==.B4966Sa2Qefmiudmv2N0n/5fm1ARrBB+n8/O3x8e4Ya5FupDf8ukj7ArrlCN6qNahsZ3C9BtPcVQqRvEZ7xYcbcyPVxION81TVgj7KeIs/eHOfxbpRQo710Ol7mKxVGTRFK/E5ewakO5LxpYn7SH4I3i2V9gqOeNQeV16O9a3sY=
+ body:
+   eventId: '{static:testCreateTDCBarcodeEvent:java}'
+   pricePerProduct:
+     amount: 19.0
+     currency: USD
+   section: 'SEC{TIMESTAMP}'
+   deliveryOption: BARCODE
+   products:
+     - row: R8
+       seat: S1
+       productType: ticket
+response:
+ code: 200
+ status: ACTIVE
+---
+type: java
+id: tdcInstantBarcode1
+class: com.stubhub.test.inventory.RandomNumberGenerator
+method: generateRandomBarcodeForTDC
+---
+type: java
+verbose: true
+class: com.stubhub.test.platform.jmx.ConsoleAdapter
+method: request
+enabled: "{EXPR:!'{ENV}'.startsWith('lvsp')}"
+parameters:
+  role : slx
+  multiBlades: true
+  action: invokeOpByName
+  name: inventoryv2-service:name=SHConfig
+  methodName: setValue
+  arg0: 'blockupdate.predelivery'
+  arg1: '1000000002'
+---
+comment: "Update Listing - elect to instant"
+request:
+ uri: /inventoryv2/listings/v2/{electronic:response.body.id}
+ method: PUT
+ headers:
+   - assertion: eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiWmpsa09UVXdNekl3TUdFeFpqZ3hNelUyTkRCa01qY3dNVEkyTVRJME5UaGhNekE1TXpSa01BPT0iLCJraWQiOiJ3c28yY2FyYm9uIn0=.eyJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC9hcGljb250ZXh0IjoiXC9vYXV0aDJcL2Fzc2VydGlvblwvdjEiLCJzdWIiOiJDNzc5OTE1NTc5RkQ1RTE0RTA0NDAwMjEyODYxQjI1NiIsImh0dHA6XC9cL3N0dWJodWIuY29tXC9jbGFpbXNcL2FwcGxpY2F0aW9uaWQiOiI1MDYiLCJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC9lbmR1c2VyaWQiOiIxMDAwMDAwMDAyIiwiaHR0cDpcL1wvc3R1Ymh1Yi5jb21cL2NsYWltc1wvYXBwbGljYXRpb25uYW1lIjoiRGVmYXVsdEFwcGxpY2F0aW9uIiwidXNlcl9uYW1lIjoiYXBpX3VzX3NlbGxfaW5keTAzQHRlc3RtYWlsLmNvbSIsImlzcyI6Imh0dHA6XC9cL3dzbzIub3JnXC9wcm9kdWN0c1wvYW0iLCJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC90bXJlZmlkIjoibnVsbCIsImNsaWVudF9pZCI6ImlYeWhZT1I2cEpsOVR0WXlZU3pvaUJYaUI2c2EiLCJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC90aWVyIjpudWxsLCJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC9pc2d1ZXN0IjoiZmFsc2UiLCJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC91c2VydHlwZSI6IkFQUExJQ0FUSU9OX1VTRVIiLCJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC9lbmR1c2VyIjoiYXBpX3VzX3NlbGxfaW5keTAzQHRlc3RtYWlsLmNvbSIsInNjb3BlIjpbImRlZmF1bHQiXSwiZXhwIjoxNTcwNjcyOTM2LCJpYXQiOjE1NTUxMjA5MzYsImp0aSI6ImIwOGVjY2RlLTZjOTMtNGVkOC04ZmY0LWIzYzZmNjZiMTU1OSIsImh0dHA6XC9cL3N0dWJodWIuY29tXC9jbGFpbXNcL3N1YnNjcmliZXIiOiJBcGlfVUtfc2VsbF9idXllcjIwIiwiaHR0cDpcL1wvc3R1Ymh1Yi5jb21cL2NsYWltc1wvZW5kdXNlclRlbmFudElkIjoiLTEyMzQiLCJhdWQiOlsiYXBpOlwvXC9zdHViaHViIl0sImh0dHA6XC9cL3N0dWJodWIuY29tXC9jbGFpbXNcL3Nlc3Npb25pZCI6IkYxRERCNEIxRTMwMzQ4OUY4QkMxODJBQzk0RkEwNkEzIiwiaHR0cDpcL1wvc3R1Ymh1Yi5jb21cL2NsYWltc1wvYXBwbGljYXRpb250aWVyIjoiVW5saW1pdGVkIiwiaHR0cDpcL1wvc3R1Ymh1Yi5jb21cL2NsYWltc1wvdmVyc2lvbiI6InYxIiwiaHR0cDpcL1wvc3R1Ymh1Yi5jb21cL2NsYWltc1wvZ3JhbnR0eXBlIjoicGFzc3dvcmQiLCJodHRwOlwvXC9zdHViaHViLmNvbVwvY2xhaW1zXC9rZXl0eXBlIjoiUFJPRFVDVElPTiIsImh0dHA6XC9cL3N0dWJodWIuY29tXC9jbGFpbXNcL2VuZHVzZXJndWlkIjoiQzc3OTkxNTU3OUZENUUxNEUwNDQwMDIxMjg2MUIyNTYifQ==.B4966Sa2Qefmiudmv2N0n/5fm1ARrBB+n8/O3x8e4Ya5FupDf8ukj7ArrlCN6qNahsZ3C9BtPcVQqRvEZ7xYcbcyPVxION81TVgj7KeIs/eHOfxbpRQo710Ol7mKxVGTRFK/E5ewakO5LxpYn7SH4I3i2V9gqOeNQeV16O9a3sY=
+ body:
+    products:
+      - row: R8
+        seat: S1
+        externalId: '{static:randomNum1:java}'
+        productType: ticket
+        fulfillmentArtifact: '{tdcInstantBarcode1:java}'
+        operation: UPDATE
+response:
+ code: 429
+---
+type: java
+verbose: true
+class: com.stubhub.test.platform.jmx.ConsoleAdapter
+method: request
+enabled: "{EXPR:!'{ENV}'.startsWith('lvsp')}"
+parameters:
+  role : slx
+  multiBlades: true
+  action: invokeOpByName
+  name: inventoryv2-service:name=SHConfig
+  methodName: setValue
+  arg0: 'blockupdate.predelivery'
+  arg1: '0'

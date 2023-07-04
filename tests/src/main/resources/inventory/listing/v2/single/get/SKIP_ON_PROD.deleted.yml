@@ -1,0 +1,49 @@
+shared: true
+verbose: true
+request:
+  method: GET
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: 'application/json'
+    - Accept: 'application/json'
+---
+sequence: new
+sequenceName: Get listing - DELETED
+comment: "create listing and delete"
+id: createToDelete
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:upsEvent:java}'
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    products:
+        row: R1
+        seat: S30
+response:
+  code: 200
+  status: ACTIVE
+---
+type: java
+verbose: true
+class: java.lang.Thread
+method: sleep
+parameters: 20000
+---
+comment: "Get Listing - All status"
+request:
+  uri: /inventory/listings/v2/{createToDelete:response.body.id}?STATUS=ALL
+  headers:
+     - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+     - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+  code: 200
+  status: DELETED
+---

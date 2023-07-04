@@ -1,0 +1,95 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: Create electronic barcode listing with SRS
+comment: "create listing - electronic barcode with restricted partner seat trait"
+id: eBarcodeError
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:barcodeEvent:java}'
+    payoutPerProduct:
+      amount: 162.00
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    comments: aisle
+    products:
+      row: R1
+      seat: S1
+    ticketTraits:
+      id: 15880
+response:
+  code: 400
+---
+comment: "create listing - electronic barcode"
+id: eBarcode
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:barcodeEvent:java}'
+    payoutPerProduct:
+      amount: 162.00
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    comments: aisle
+    products:
+      row: R1
+      seat: S1
+response:
+  code: 200
+---
+comment: "Get Listing - Valid"
+request:
+  uri: /inventory/listings/v2/{eBarcode:response.body.id}
+  method: GET
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+  code: 200
+  status: ACTIVE
+  id: '{eBarcode:response.body.id}'
+  deliveryOption: BARCODE
+  pricePerProduct:
+    amount: 180.00
+    currency: USD
+---
+comment: "create listing - electronic barcode"
+id: eBarcodeMultipleSeats
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:barcodeEvent:java}'
+    payoutPerProduct:
+      amount: 162.00
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    products:
+      - row: R2
+        seat: S3
+        fulfillmentArtifact: ''
+      - row: R2
+        seat: S4
+        fulfillmentArtifact: ''
+response:
+  code: 200

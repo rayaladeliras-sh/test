@@ -1,0 +1,87 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: Update electronic to predelivery with PP
+id: electronicToInstant
+request:
+ uri: /inventory/listings/v2
+ method: POST
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+ body:
+   eventId: '{static:testCreateTDCBarcodeEvent:java}'
+   pricePerProduct:
+     amount: 19.0
+     currency: USD
+   section: 'SEC{TIMESTAMP}'
+   deliveryOption: BARCODE
+   products:
+     - row: R8
+       seat: S1
+       productType: ticket
+     - row: LOT
+       seat: Parking Pass
+       productType: parking_pass
+response:
+ code: 200
+ status: ACTIVE
+---
+type: java
+id: tdcInstantBarcode1
+class: com.stubhub.test.inventory.RandomNumberGenerator
+method: generateRandomBarcodeForTDC
+---
+type: java
+id: tdcInstantBarcode2
+class: com.stubhub.test.inventory.RandomNumberGenerator
+method: generateRandomBarcodeForTDC
+---
+comment: "Update Listing - elect to instant Error"
+request:
+ uri: /inventory/listings/v2/{electronicToInstant:response.body.id}
+ method: PUT
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+ body:
+    products:
+      - row: R8
+        seat: S1
+        productType: ticket
+        fulfillmentArtifact: '{tdcInstantBarcode1:java}'
+        operation: UPDATE  
+response:
+  code: 400
+  description: Fulfillment artifacts do not match the quantity
+---
+comment: "Update Listing - elect to instant"
+request:
+ uri: /inventory/listings/v2/{electronicToInstant:response.body.id}
+ method: PUT
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+ body:
+    products:
+      - row: R8
+        seat: S1
+        productType: ticket
+        fulfillmentArtifact: '{tdcInstantBarcode1:java}'
+        operation: UPDATE 
+      - row: LOT
+        seat: Parking Pass
+        productType: parking_pass
+        fulfillmentArtifact: '{tdcInstantBarcode2:java}'
+        operation: UPDATE   
+response:
+  code: 200
+  status: PENDING | ACTIVE | INCOMPLETE

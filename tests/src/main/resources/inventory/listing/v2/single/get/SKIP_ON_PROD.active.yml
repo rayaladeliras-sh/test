@@ -1,0 +1,29 @@
+shared: true
+verbose: true
+request:
+  method: GET
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: 'application/json'
+    - Accept: 'application/json'
+---
+sequence: new
+sequenceName: Get listing - ACTIVE
+include: SKIP_ON_PROD.createMinimalListing:createMinimal
+comment: create listing
+eventId: '{static:upsEvent:java}'
+quantity: '1'
+amount: '19.0'
+csrf: '{static:gettoken:response.body.login.csrf_token}'
+cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+---
+comment: "Get Listing - Valid"
+request:
+  uri: /inventory/listings/v2/{createMinimal:response.body.id}
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+  code: 200
+  status: ACTIVE

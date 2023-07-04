@@ -1,0 +1,68 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: Activate Incomplete listing
+id: createListing
+request:
+ uri: /inventory/listings/v2
+ method: POST
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+ body:
+   eventId: '{static:barcodePredeliveryOnlyEvent:java}'
+   pricePerProduct:
+     amount: 19.0
+     currency: USD
+   section: 'SEC{TIMESTAMP}'
+   deliveryOption: BARCODE
+   products:
+     - row: R8
+       seat: S1
+response:
+ code: 200
+ status: INCOMPLETE
+---
+comment: "Activate Listing"
+request:
+ uri: /inventory/listings/v2/{createListing:response.body.id}
+ method: PUT
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+ body:
+    status: ACTIVE
+response:
+ code: 400
+ description: Listing cannot be activated until fulfilled
+---
+type: java
+id: tdcInstantBarcode
+class: com.stubhub.test.inventory.RandomNumberGenerator
+method: generateRandomBarcodeForTDC
+---
+comment: "Predeliver Listing"
+request:
+ uri: /inventory/listings/v2/{createListing:response.body.id}
+ method: PUT
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+ body:
+    status: ACTIVE
+    products:
+      - row: R8
+        seat: S1
+        fulfillmentArtifact: '{tdcInstantBarcode:java}'
+        operation: UPDATE
+response:
+ code: 200
+ status: PENDING

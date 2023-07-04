@@ -1,0 +1,12 @@
+id: token
+include: user
+---
+maxRetries: 3
+include: stubhub.iam:web.login
+credentials:
+  username: '{user:response.body.[0].entity.email}'
+  password: '{user:response.body.[0].entity.password}'
+---
+maxRetries: 3
+include: stubhub.iam:token.init
+sessionId: '{web.login:response.body.login.session_id}'

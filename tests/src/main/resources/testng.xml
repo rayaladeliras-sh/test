@@ -1,0 +1,11 @@
+<!DOCTYPE suite SYSTEM "http://beust.com/testng/testng-1.0.dtd" >
+<suite name="all-tests" data-provider-thread-count="250">
+    <listeners>
+        <!--<listener class-name="com.ebay.maui.reporter.HTMLReporter"/>-->
+    </listeners>
+    <test name="framework-classes" parallel="methods">
+        <classes>
+            <class name="com.stubhub.test.platform.FunctionalTest"/>
+        </classes>
+    </test>
+</suite>

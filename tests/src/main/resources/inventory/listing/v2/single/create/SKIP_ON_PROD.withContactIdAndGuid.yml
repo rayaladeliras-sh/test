@@ -1,0 +1,93 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: create listing with ContactGuid
+id: selectUserGuid
+type: sql
+comment: SQL select user Id
+verbose: true
+minCount: 1
+username: stub_app
+password: dstub_app
+sql: select user_cookie_guid from users where id = {static:prepareSeller:java.id}
+---
+type: fixture
+id: fix
+parameters:
+  name: 'test-{TIMESTAMP}'
+---
+id: createCustomer
+comment: "create customer contact positive"
+request:
+  uri: /user/customers/v1/{selectUserGuid:sql.rows[0].user_cookie_guid}/contactsV2/
+  method: POST
+  headers:
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - Accept-Language: en-US
+  body:
+    contactV2:
+      name:
+        firstName: 'first-{fix:parameters.name}'
+        lastName: 'last-{fix:parameters.name}'
+      companyName: testing
+      address:
+        line1: 123, main st
+        line2: abc
+        city: san mateo
+        state: CA
+        country: US
+        zipOrPostalCode: 94404
+      phoneNumber: '6502005548'
+      phoneCallingCode: 001
+      phoneValidatedInd: false
+      paymentContactInd: N
+response:
+  code: 200
+  bodyMatch: contains
+  body:
+    contactV2:
+      id: '{regexp:[a-zA-Z0-9_\-\s]{0,16}}'
+      contactGuid: '{regexp:[a-zA-Z0-9_\-\s]{0,16}}'  
+---
+id: createlisting
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:upsEvent:java}'
+    deliveryOption: UPS
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section:  'SEC{TIMESTAMP}'
+    contactGuid: '{createCustomer:response.body.contactV2.contactGuid}'
+    products:
+      row: R1
+      seat: S1
+response:
+  code: 200
+---
+comment: "Get Listing"
+request:
+  uri: /inventory/listings/v2/{createlisting:response.body.id}
+  method: GET
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+  code: 200
+  status: ACTIVE
+  id: '{createlisting:response.body.id}'
+  contactGuid: '{createCustomer:response.body.contactV2.contactGuid}'

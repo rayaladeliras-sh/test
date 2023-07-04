@@ -1,0 +1,41 @@
+sequence: new
+type: sql
+verbose: true
+id: getBusinessSellerId
+minCount: 1
+sql: |
+     select seller_id from tickets where business_id is not null and rownum=1
+---
+id: reset
+type: java
+class: com.stubhub.test.inventory.ActiveMQTrigger
+method: publishToBusinessQueue
+parameters:
+  - '{ENV}'
+  - '{EXPR: String.valueOf({getBusinessSellerId:sql.rows[0].seller_id}) }'
+  - 'RESET'
+---
+type: java
+verbose: true
+class: java.lang.Thread
+method: sleep
+parameters: 30000
+
+---
+id: add
+type: java
+class: com.stubhub.test.inventory.ActiveMQTrigger
+method: publishToBusinessQueue
+parameters:
+  - '{ENV}'
+  - '{EXPR: String.valueOf({getBusinessSellerId:sql.rows[0].seller_id}) }'
+  - 'ADD'
+---
+id: invalidAction
+type: java
+class: com.stubhub.test.inventory.ActiveMQTrigger
+method: publishToBusinessQueue
+parameters:
+  - '{ENV}'
+  - '{EXPR: String.valueOf({getBusinessSellerId:sql.rows[0].seller_id}) }'
+  - 'TEST'

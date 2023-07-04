@@ -1,0 +1,95 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: http
+  subDomain: api-int
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: Create Hidden listing with CC
+id: addUserCC
+include: user/update:addCreditCard
+email: api_us_sell_indy10@testmail.com
+password: password
+ccType: Visa
+countryCode: US
+---
+id: addPaypal
+include: user/update:addPaypal
+email: api_us_sell_indy10@testmail.com
+password: password
+countryCode: US
+---
+comment: "create hidden listing"
+id: hidden
+request:
+  uri: /inventoryv2/listings/v2
+  method: POST
+  headers:
+    - Authorization: Bearer JYf0azPrf1RAvhUhpGZudVU9bBEa
+    - x-sh-service-context: '{role=R2, operatorId=tb, proxiedId=1000000009}'
+  body:
+    eventId: '{static:pdfEvent:java}'
+    deliveryOption: PDF
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section:  'SEC{TIMESTAMP}'
+    status: HIDDEN
+    products:
+      row: R1
+      seat: S1
+response:
+  code: 200
+  status: HIDDEN
+---
+comment: "Get listing"
+id: getHiddenListing
+request:
+  uri: /inventoryv2/listings/v2/{hidden:response.body.id}
+  method: GET
+  headers:
+    - Authorization: Bearer JYf0azPrf1RAvhUhpGZudVU9bBEa
+    - x-sh-service-context: '{role=R2, operatorId=tb, proxiedId=1000000009}'
+response:
+  code: 200
+  status: HIDDEN
+  id: '{hidden:response.body.id}'
+  deliveryOption: PDF
+---
+type: sql
+comment: Get CC ID
+verbose: true
+id: getCCId
+minCount: 1
+sql: |
+    select paymnt_instr_resource_guid from paymnt_instr_resource where user_cc_id = ?
+values:
+  - '{getHiddenListing:response.body.ccId}'
+---
+comment: "create hidden listing with cc"
+id: hiddenListingWithCC
+request:
+  uri: /inventoryv2/listings/v2
+  method: POST
+  headers:
+    - Authorization: Bearer JYf0azPrf1RAvhUhpGZudVU9bBEa
+    - x-sh-service-context: '{role=R2, operatorId=tb, proxiedId=1000000009}'
+  body:
+    eventId: '{static:pdfEvent:java}'
+    deliveryOption: PDF
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section:  'SEC{TIMESTAMP}'
+    status: HIDDEN
+    ccId: '{getCCId:sql.rows[0].paymnt_instr_resource_guid}'
+    products:
+      row: R2
+      seat: S2
+response:
+  code: 200
+  status: HIDDEN

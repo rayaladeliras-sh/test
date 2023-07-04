@@ -1,0 +1,19 @@
+shared: true
+verbose: true
+request:
+  method: GET
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: 'application/json'
+    - Accept: 'application/json'
+---
+comment: "Get Listing - In Valid"
+request:
+  uri: /inventory/listings/v2/1234567,568
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+  code: 400
+  description: invalid listingId

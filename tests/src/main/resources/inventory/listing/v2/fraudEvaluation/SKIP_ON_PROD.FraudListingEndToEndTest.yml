@@ -1,0 +1,81 @@
+dependsOn:
+  - name: inventory/listing/v2/fraudEvaluation/SKIP_ON_PROD.lisitngFraudEvaluationEmailListener
+---
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: endToEndCreateListingFraudEvaluation
+id: enableFraudEvaluation
+type: java
+verbose: true
+class: "com.stubhub.test.platform.jmx.ConsoleAdapter"
+method: request
+enabled: "{EXPR:!'{ENV}'.startsWith('lvsp')}"
+parameters: 
+  - role: slx
+  - multiBlades: true
+  - action: invokeOp
+  - methodName: 'setProperty'
+  - name: 'inventoryv2-service:name=SHConfig'
+  - methodIndex: 7
+  - arg0: 'tns.listing.evaluation.new.flow.enabled'
+  - arg1: 'true'
+---
+id: prepareEvent
+include: event/create:byDateRange
+fulfillmentMethod: UPS
+countryCode: US
+startDaysFromNow: 10
+endDaysFromNow: 100
+---
+id: prepareSeller
+include: user/create:withCCAndPaypal
+ccType: Visa
+countryCode: US
+---
+id: deleteDuplicateEmailAddressUsers
+type: java
+class: com.stubhub.test.inventory.TNSFraudEvaluationProducerTest
+method: scrubUsersTableForDuplicateEmail
+parameters: 'skarnam@ebay.com'
+---
+id: updateUserEmailAddress
+type: sql
+minCount: 1
+sql: |
+  update stub.users set DEFAULT_EMAIL='skarnam@ebay.com' where ID={prepareSeller:java.id} 
+---
+id: createListing1
+include: listing/create:normal
+eventId: '{prepareEvent:java}'
+sellerEmail: '{prepareSeller:java.email}'
+sellerPassword: '{prepareSeller:java.password}'
+quantity: 2
+fulfillmentMethod: PDF
+price: '18.5'
+isGA: 'false'
+---
+type: java
+verbose: true
+class: java.lang.Thread
+method: sleep
+parameters: 5000
+---
+id: testFraudEvaluationQueueForCreateListing1
+type: java
+class: com.stubhub.test.inventory.TNSFraudEvaluationProducerTest
+method: browseQueue
+parameters:
+  - '{ENV}'
+  - '{createListing1:java}'
+  - ''
+  -  true
+---

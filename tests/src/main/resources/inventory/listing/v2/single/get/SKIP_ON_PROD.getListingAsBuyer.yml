@@ -1,0 +1,77 @@
+shared: true
+verbose: true
+request:
+  method: GET
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: 'application/json'
+    - Accept: 'application/json'
+---
+sequence: new
+sequenceName: Get listing - ACTIVE
+id: prepareSeller
+include: user/create:withCCAndPaypal
+ccType: Visa
+countryCode: US
+---
+id: prepareBuyer
+include: user/create:withCCAndPaypal
+ccType: Visa
+countryCode: US
+---
+maxRetries: 3
+id: gettoken
+include: stubhub.iam:web.login
+credentials:
+  username: '{prepareSeller:java.email}'
+  password: '{prepareSeller:java.password}'
+---
+maxRetries: 3
+id: getcookie
+include: stubhub.iam:token.init
+sessionId: '{gettoken:response.body.login.session_id}'
+---
+maxRetries: 3
+id: gettokenBuyer
+include: stubhub.iam:web.login
+credentials:
+  username: '{prepareBuyer:java.email}'
+  password: '{prepareBuyer:java.password}'
+---
+maxRetries: 3
+id: getcookieBuyer
+include: stubhub.iam:token.init
+sessionId: '{gettokenBuyer:response.body.login.session_id}'
+---
+comment: "create listing - UPS"
+id: ups
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:upsEvent:java}'
+    deliveryOption: UPS
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    products:
+      row: R1
+      seat: S1
+response:
+  code: 200
+  status: ACTIVE
+---
+comment: "Get Listing - Buyer"
+request:
+  uri: /inventory/listings/v2/{ups:response.body.id}
+  headers:
+    - Cookie: '{getcookieBuyer:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{gettokenBuyer:response.body.login.csrf_token}'
+response:
+  code: 200
+  status: ACTIVE

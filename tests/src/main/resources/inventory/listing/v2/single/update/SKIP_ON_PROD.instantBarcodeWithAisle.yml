@@ -1,0 +1,65 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: Update Listing with Aisle
+id: instantBarcode1
+request:
+ uri: /inventory/listings/v2
+ method: POST
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+ body:
+   eventId: '{static:testCreateTMBarcodeEvent:java}'
+   pricePerProduct:
+     amount: 19.0
+     currency: USD
+   section: '{static:randomNum:java}'
+   deliveryOption: BARCODE
+   products:
+     - row: R1
+       seat: '{static:randomNum:java}'
+response:
+ code: 200
+ status: ACTIVE
+---
+comment: "Update Listing - Mobile"
+request:
+ uri: /inventory/listings/v2/{instantBarcode1:response.body.id}
+ method: PUT
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+ body:
+   ticketTraits:
+     - name: Aisle
+       operation: ADD
+response:
+ code: 200
+ status: ACTIVE
+ id: '{instantBarcode1:response.body.id}'
+---
+comment: "Get Listing - Aisle"
+request:
+ uri: /inventory/listings/v2/{instantBarcode1:response.body.id}
+ method: GET
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+ code: 200
+ status: ACTIVE
+ id: '{instantBarcode1:response.body.id}'
+ ticketTraits:
+    0:
+      id: 101
+      name: Aisle
+      type: Ticket Feature

@@ -1,0 +1,39 @@
+<!-- 
+  This is a POC of how to submit a request to Pre-deliver PDF request from HTML page to our API.
+  Main task here is to convert the form-input from key-value pair to JSON string. PredeliverPDF API expects JSON String
+-->
+
+<html>
+<head>
+<script type="text/javascript">
+function formSubmit()
+{
+var jSon = "{ \"listing\": {\"tickets\":[{\"row\":\" " + document.myForm.row.value +  " \", \"seat\":\" " + document.myForm.seat.value + " \", \"name\":\"file1\"}]}}";
+document.myForm.listing.setAttribute("value", jSon);  
+
+<!-- Remove these fields as they are already in the JSON string. Otherwise API will think of them as another attachment and might fail validation-->
+document.myForm.removeChild(document.myForm.row);
+document.myForm.removeChild(document.myForm.seat);
+
+document.myForm.submit();
+
+}
+</script>
+</head>
+
+<body>
+<form id="frm1" method="post" enctype="multipart/form-data" name="myForm" action="http://localhost:8081/inventorynew/listings/v1/211601197/pdfs">
+
+Row : <input type="text" name="row" id="row"><br>
+Seat: <input type="text" name="seat" id="name"><br>
+
+<!-- Name "lisitng" is important here -->
+PDF: <input type="hidden" name="listing">
+
+<input type="file" name="file1">
+<input type="button" onclick="formSubmit()" value="Submit">
+
+</form>
+</body>
+
+</html>

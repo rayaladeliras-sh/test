@@ -1,0 +1,32 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: Create listing for parking pass only event
+comment: "create listing - parking pass only event"
+id: createListing
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:parkingPassOnlyEvent:java}'
+    payoutPerProduct:
+      amount: 162.00
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    products:
+      row: R1
+      seat: S1
+    comments: Parking pass
+response:
+  code: 200

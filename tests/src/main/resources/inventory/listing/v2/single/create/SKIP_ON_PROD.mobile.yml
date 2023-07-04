@@ -1,0 +1,55 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: Create mobile listing
+sequence: new
+sequenceName: Create mobile transfer Listing
+id: selecMobileUserId
+type: sql
+comment: SQL select user Id
+verbose: true
+minCount: 1
+sql: select id from users where default_email = ?
+values:
+  - '{static:prepareSeller:java.email}'
+---
+type: sql
+comment: Add user to user group
+verbose: true
+id: addUserToMobile
+minCount: 1
+sql: |
+    insert into user_group_user_xref select user_group_user_xref_seq.nextval, user_group_id,?,0,1,sysdate,
+    'stub',sysdate,'stub'from user_group where user_group_id=209848
+values:
+  - '{selecMobileUserId:sql.rows[0].id}'
+---
+id: mobile
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:mobileEvent:java}'
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    comments: mobile
+    products:
+        row: 'R1{TIMESTAMP}'
+        seat: S1
+response:
+  code: 200
+  status: ACTIVE
+  deliveryOption: MOBILE

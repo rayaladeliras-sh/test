@@ -1,0 +1,358 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: Negative cases - create listing
+id: eventMissing
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    products:
+        row: R1
+        seat: S50
+response:
+  code: 400
+---
+id: InvalidEvent
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: 1234123
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    products:
+        row: R1
+        seat: S50
+response:
+  code: 404
+---
+id: EventNotMapped
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    event:
+      name: Wicked New York Tickets
+      date: '2017-12-29T14:00:00'
+      venue: Gershwin Theatre
+    deliveryOption: PDF
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    quantity: 2
+response:
+  code: 400
+---
+id: EventVenueNotMapped
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    event:
+      name: Wicked New York Tickets
+      date: '2018-12-29T16:00:00'
+      venue: Gershwin Theatre123
+    deliveryOption: PDF
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    quantity: 2
+response:
+  code: 400
+---
+id: InvalidDateFormat
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    event:
+      name: Wicked New York Tickets
+      date: '2018-01-06'
+      venue: Gershwin Theatre
+    deliveryOption: PDF
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    quantity: 2
+response:
+  code: 400
+---
+id: MultipleEventsFound
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    event:
+      name: Wicked New York Tickets
+      date: '2018-01-06T00:00:00'
+      venue: Gershwin Theatre
+    deliveryOption: PDF
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    quantity: 2
+response:
+  code: 400
+---
+id: PricingError
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:upsEvent:java}'
+    deliveryOption: PDF
+    section: S123
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    quantity: 2
+response:
+  code: 400
+---
+id: InvalidSectionWords
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:upsEvent:java}'
+    deliveryOption: PDF
+    section: HOTEL
+    products:
+        row: R1
+        seat: S1
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    quantity: 2
+response:
+  code: 400
+---
+id: maxLengthExceeded
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:upsEvent:java}'
+    deliveryOption: PDF
+    section: 'SEC{TIMESTAMP}'
+    products:
+        row: 12313131313131313131313131313131313
+        seat: S1
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    quantity: 2
+response:
+  code: 400
+---
+id: listingPriceTooLow
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:upsEvent:java}'
+    deliveryOption: PDF
+    section: 'SEC{TIMESTAMP}'
+    products:
+        row: 12
+        seat: S1
+    pricePerProduct:
+      amount: 1.0
+      currency: USD
+    quantity: 2
+response:
+  code: 400
+---
+id: invalidQty
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:upsEvent:java}'
+    deliveryOption: PDF
+    section: 'SEC{TIMESTAMP}'
+    products:
+        row: 12
+        seat: S1
+    pricePerProduct:
+      amount: 1.0
+      currency: USD
+    quantity: 0
+response:
+  code: 400
+---
+id: invalidCurrency
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:upsEvent:java}'
+    deliveryOption: UPS
+    section: 'SEC{TIMESTAMP}'
+    products:
+        row: 12
+        seat: S1
+    pricePerProduct:
+      amount: 12.0
+      currency: GBP
+    quantity: 1
+response:
+  code: 400
+---
+id: deliveryOptionNotSupported
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:upsEvent:java}'
+    deliveryOption: BARCODE
+    section: 'SEC{TIMESTAMP}'
+    products:
+        row: R1
+        seat: S1
+    pricePerProduct:
+      amount: 12.0
+      currency: USD
+response:
+  code: 400
+---
+id: barcodeFormatNotSupported
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:testCreateAEGBarcodeEvent:java}'
+    section: 'SEC{TIMESTAMP}'
+    products:
+        row: R1
+        seat: S1
+        fulfillmentArtifact: 7y67-9i8uu7y6
+    pricePerProduct:
+      amount: 12.0
+      currency: USD
+response:
+  code: 400
+---
+id: faceValueError
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:ukEvent:java}'
+    section: 'SEC{TIMESTAMP}'
+    products:
+        row: R1
+        seat: S1
+    pricePerProduct:
+      amount: 12.0
+      currency: GBP
+response:
+  code: 400
+---
+id: invalidCurrencyError
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:ukEvent:java}'
+    section: 'SEC{TIMESTAMP}'
+    products:
+        row: R1
+        seat: S1
+    pricePerProduct:
+      amount: 12.0
+      currency: GBP
+    faceValue:
+      amount: 12.0
+      currency: USD
+response:
+  code: 400
+---
+id: duplicateExternalSeatId
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:upsEvent:java}'
+    section: 'SEC{TIMESTAMP}'
+    products:
+      - row: R1
+        seat: S1
+        externalId: E1
+      - row: R1
+        seat: S2
+        externalId: E1
+    pricePerProduct:
+      amount: 12.0
+      currency: GBP
+    faceValue:
+      amount: 12.0
+      currency: USD
+response:
+  code: 400

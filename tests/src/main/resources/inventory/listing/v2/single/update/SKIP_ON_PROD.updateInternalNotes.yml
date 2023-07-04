@@ -1,0 +1,73 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: Update internal notes
+comment: "Update Internal Notes"
+id: updateInternalNotes
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:upsEvent:java}'
+    deliveryOption: UPS
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+      section: 'SEC{TIMESTAMP}'
+    products:
+      row: R1
+      seat: S1
+response:
+  code: 200
+---
+comment: "Updating listing - internal notes"
+request:
+  uri: /inventory/listings/v2/{updateInternalNotes:response.body.id}
+  method: PUT
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    internalNotes: This is Test internal Notes
+    comments: Aisle
+response:
+  code: 200
+---
+type: sql
+comment: SQL select comments column tickets table
+verbose: true
+id: selectTicketsTable
+minCount: 1
+username: stub_app
+password: dstub_app
+sql: 'select comments,seller_internal_note from tickets where id=?'
+values: 
+ - '{updateInternalNotes:response.body.id}'
+rows:
+ -
+  - Aisle
+  - This is Test internal Notes
+---
+comment: "Get Listing - Valid"
+request:
+  uri: /inventory/listings/v2/{updateInternalNotes:response.body.id}
+  method: GET
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+  code: 200
+  status: ACTIVE
+  id: '{updateInternalNotes:response.body.id}'
+  internalNotes: This is Test internal Notes

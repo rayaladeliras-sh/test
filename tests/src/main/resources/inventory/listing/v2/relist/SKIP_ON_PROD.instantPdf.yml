@@ -1,0 +1,148 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: Relist - Predelivery barcode seats
+id: prepareSeller
+include: user/create:withCCAndPaypal
+ccType: Visa
+countryCode: US
+---
+id: prepareBuyer
+include: user/create:withCCAndPaypal
+ccType: Visa
+countryCode: US
+---
+id: pdfEvent
+include: event/create:byDateRange
+fulfillmentMethod: PDF
+countryCode: US
+startDaysFromNow: 3
+endDaysFromNow: 100
+---
+maxRetries: 3
+id: gettoken
+include: stubhub.iam:web.login
+credentials:
+  username: '{prepareSeller:java.email}'
+  password: '{prepareSeller:java.password}'
+---
+maxRetries: 3
+id: getcookie
+include: stubhub.iam:token.init
+sessionId: '{gettoken:response.body.login.session_id}'
+---
+maxRetries: 3
+id: gettokenBuyer
+include: stubhub.iam:web.login
+credentials:
+  username: '{prepareBuyer:java.email}'
+  password: '{prepareBuyer:java.password}'
+---
+maxRetries: 3
+id: getcookieBuyer
+include: stubhub.iam:token.init
+sessionId: '{gettokenBuyer:response.body.login.session_id}'
+---
+type: java
+id: tmInstantBarcode
+class: com.stubhub.test.inventory.RandomNumberGenerator
+method: generateRandomBarcodeForTM
+---
+id: generateDate
+type: java
+class: com.stubhub.global.domain.utils.base.helper.Time
+method: generateDate
+parameters: yyyy-MM-dd HH:mm:ss
+---
+id: testCreateTMBarcodeEvent
+include: event/create:barcodeEventByDate
+barcodeType: TM
+countryCode: US
+eventDate: '{generateDate:java}'
+---
+id: instantBarcodeListing
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{testCreateTMBarcodeEvent:java}'
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    products:
+        row: R1
+        seat: S50
+        fulfillmentArtifact: '{tmInstantBarcode:java}'
+response:
+  code: 200
+  status: PENDING | ACTIVE
+---
+type: java
+verbose: true
+class: java.lang.Thread
+method: sleep
+parameters: 150000
+---
+comment: Enable boid for this event to go through NOLC
+type: java
+class: com.stubhub.global.domain.utils.order.EnableNewOrderLifeCycleUtil
+method: enableNewOrderLifeCycleByEvent
+parameters: '{testCreateTMBarcodeEvent:java}'
+---
+type: java
+verbose: true
+class: java.lang.Thread
+method: sleep
+parameters: 400000
+---
+id: orderToRelist
+include: order/create:withListings
+listingIds: '{instantBarcodeListing:response.body.id}'
+fulfillmentMethod: Barcode
+buyerEmail: '{prepareBuyer:java.email}'
+buyerPassword: '{prepareBuyer:java.password}'
+paymentMethod: CreditCard
+---
+type: sql
+comment: update order proc
+verbose: true
+id: updateOrderProc1
+minCount: 1
+sql:   update stub_trans set order_proc_sub_status_code = 43 where buyer_order_id = ?
+values:
+  - '{orderToRelist:java}'
+---
+type: java
+verbose: true
+class: java.lang.Thread
+method: sleep
+parameters: 400000
+---
+# This is a bug right now, neeeds to be uncommented once this is fixed - SELLAPI-3064
+id: relistInstantPDF
+#enabled: false
+request:
+  uri: /inventory/listings/v2/relist
+  method: POST
+  headers:
+    - Cookie: '{getcookieBuyer:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{gettokenBuyer:response.body.login.csrf_token}'
+  body:
+    listings:
+      - orderId: '{orderToRelist:java}'
+        pricePerItem: 20.50
+response:
+  code: 200
+---

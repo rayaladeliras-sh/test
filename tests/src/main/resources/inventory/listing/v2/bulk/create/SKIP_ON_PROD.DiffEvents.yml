@@ -1,0 +1,264 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: create bulk listing - different events
+id: createBulkDiffEvent
+request:
+ uri: /inventory/listings/v2/bulk
+ method: POST
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+ body:
+  listings:
+    - eventId: '{static:upsEvent:java}'
+      pricePerProduct:
+        amount: 19.0
+        currency: USD
+      section: '{static:randomNum:java}'
+      deliveryOption: UPS
+      externalListingId: 'EXT_{TIMESTAMP}_0'
+      products:
+        - row: BR2
+          seat: S1
+          productType: ticket
+    - eventId: '{static:upsEvent:java}'
+      pricePerProduct:
+        amount: 19.0
+        currency: USD
+      section: '{static:randomNum:java}'
+      deliveryOption: UPS
+      externalListingId: 'EXT_{TIMESTAMP}_1'
+      products:
+        - row: BR2
+          seat: S2
+          productType: ticket
+    - eventId: '{static:upsEvent:java}'
+      pricePerProduct:
+        amount: 19.0
+        currency: USD
+      section: '{static:randomNum:java}'
+      deliveryOption: UPS
+      externalListingId: 'EXT_{TIMESTAMP}_2'
+      products:
+        - row: BR2
+          seat: S3
+          productType: ticket
+    - eventId: '{static:upsEvent:java}'
+      pricePerProduct:
+        amount: 19.0
+        currency: USD
+      section: '{static:randomNum:java}'
+      deliveryOption: UPS
+      externalListingId: 'EXT_{TIMESTAMP}_3'
+      products:
+        - row: BR2
+          seat: S4
+          productType: ticket
+    - eventId: '{static:upsEvent:java}'
+      pricePerProduct:
+        amount: 19.0
+        currency: USD
+      section: '{static:randomNum:java}'
+      deliveryOption: UPS
+      externalListingId: 'EXT_{TIMESTAMP}_4'
+      products:
+        - row: BR2
+          seat: S5
+          productType: ticket
+    - eventId: '{static:upsEvent:java}'
+      pricePerProduct:
+        amount: 19.0
+        currency: USD
+      section: '{static:randomNum:java}'
+      deliveryOption: UPS
+      externalListingId: 'EXT_{TIMESTAMP}_5'
+      products:
+        - row: BR2
+          seat: S6
+          productType: ticket
+    - eventId: '{static:upsEvent:java}'
+      pricePerProduct:
+        amount: 19.0
+        currency: USD
+      section: '{static:randomNum:java}'
+      deliveryOption: UPS
+      externalListingId: 'EXT_{TIMESTAMP}_6'
+      products:
+        - row: BR2
+          seat: S7
+          productType: ticket
+    - eventId: '{static:upsEvent:java}'
+      pricePerProduct:
+        amount: 19.0
+        currency: USD
+      section: '{static:randomNum:java}'
+      deliveryOption: UPS
+      externalListingId: 'EXT_{TIMESTAMP}_7'
+      products:
+        - row: BR2
+          seat: S8
+          productType: ticket
+    - eventId: '{static:upsEvent:java}'
+      pricePerProduct:
+        amount: 19.0
+        currency: USD
+      section: '{static:randomNum:java}'
+      deliveryOption: UPS
+      externalListingId: 'EXT_{TIMESTAMP}_8'
+      products:
+        - row: BR2
+          seat: S9
+          productType: ticket
+    - eventId: '{static:upsEvent:java}'
+      pricePerProduct:
+        amount: 19.0
+        currency: USD
+      section: '{static:randomNum:java}'
+      deliveryOption: UPS
+      externalListingId: 'EXT_{TIMESTAMP}_9'
+      products:
+        - row: BR2
+          seat: S10
+          productType: ticket
+    - eventId: '{static:upsEvent:java}'
+      pricePerProduct:
+        amount: 19.0
+        currency: USD
+      section: '{static:randomNum:java}'
+      deliveryOption: UPS
+      externalListingId: 'EXT_{TIMESTAMP}_10'
+      products:
+        - row: BR2
+          seat: S11
+          productType: ticket
+    - eventId: '{static:pdfEvent:java}'
+      pricePerProduct:
+        amount: 19.0
+        currency: USD
+      section: '{static:randomNum:java}'
+      deliveryOption: UPS
+      externalListingId: 'EXT_{TIMESTAMP}_11'
+      products:
+        - row: BR2
+          seat: S12
+          productType: ticket
+    - eventId: '{static:pdfEvent:java}'
+      pricePerProduct:
+        amount: 19.0
+        currency: USD
+      section: '{static:randomNum:java}'
+      deliveryOption: UPS
+      externalListingId: 'EXT_{TIMESTAMP}_12'
+      products:
+        - row: BR2
+          seat: S13
+          productType: ticket
+    - eventId: '{static:pdfEvent:java}'
+      pricePerProduct:
+        amount: 19.0
+        currency: USD
+      section: '{static:randomNum:java}'
+      deliveryOption: UPS
+      externalListingId: 'EXT_{TIMESTAMP}_13'
+      products:
+        - row: BR2
+          seat: S14
+          productType: ticket
+    - eventId: '{static:pdfEvent:java}'
+      pricePerProduct:
+        amount: 19.0
+        currency: USD
+      section: '{static:randomNum:java}'
+      deliveryOption: UPS
+      externalListingId: 'EXT_{TIMESTAMP}_14'
+      products:
+        - row: BR2
+          seat: S15
+          productType: ticket
+    - eventId: '{static:pdfEvent:java}'
+      pricePerProduct:
+        amount: 19.0
+        currency: USD
+      section: '{static:randomNum:java}'
+      deliveryOption: UPS
+      externalListingId: 'EXT_{TIMESTAMP}_15'
+      products:
+        - row: BR2
+          seat: S16
+          productType: ticket
+    - eventId: '{static:barcodeEvent:java}'
+      pricePerProduct:
+        amount: 19.0
+        currency: USD
+      section: '{static:randomNum:java}'
+      deliveryOption: UPS
+      externalListingId: 'EXT_{TIMESTAMP}_16'
+      products:
+        - row: BR2
+          seat: S17
+          productType: ticket
+    - eventId: '{static:barcodeEvent:java}'
+      pricePerProduct:
+        amount: 19.0
+        currency: USD
+      section: '{static:randomNum:java}'
+      deliveryOption: UPS
+      externalListingId: 'EXT_{TIMESTAMP}_17'
+      products:
+        - row: BR2
+          seat: 18
+          productType: ticket
+    - eventId: '{static:barcodeEvent:java}'
+      pricePerProduct:
+        amount: 19.0
+        currency: USD
+      section: '{static:randomNum:java}'
+      deliveryOption: UPS
+      externalListingId: 'EXT_{TIMESTAMP}_18'
+      products:
+        - row: BR2
+          seat: 19
+          productType: ticket
+    - eventId: '{static:barcodeEvent:java}'
+      pricePerProduct:
+        amount: 19.0
+        currency: USD
+      section: '{static:randomNum:java}'
+      deliveryOption: UPS
+      externalListingId: 'EXT_{TIMESTAMP}_19'
+      products:
+        - row: BR2
+          seat: 20
+          productType: ticket
+response:
+ code: 200
+ jobGuid: '{regexp:[0-9]+}'
+---
+type: java
+verbose: true
+class: java.lang.Thread
+method: sleep
+parameters: 30000
+---
+id: callJobService1
+request:
+ uri: /inventory/listings/v2/bulk/{createBulkDiffEvent:response.body.jobGuid}
+ method: GET
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+ code: 200
+ jobGuid: '{createBulkDiffEvent:response.body.jobGuid}'
+ status: COMPLETED
+ numberOfProcessedListings: 20
+ numberOfInputListings: 20

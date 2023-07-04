@@ -1,0 +1,71 @@
+dependsOn:
+  - name: inventory/listing/v2/fraudEvaluation/SKIP_ON_PROD.FraudListingEndToEndTest
+---
+shared: true
+verbose: true
+request:
+  subDomain: api-int
+  scheme: https
+  headers:
+    - Accept: application/json
+    - Content-Type: application/json
+---
+sequence: new
+sequenceName: endToEndListingEvaluationReject
+id: prepareEvent
+include: event/create:byDateRange
+fulfillmentMethod: UPS
+countryCode: US
+startDaysFromNow: 10
+endDaysFromNow: 100
+---
+id: prepareSeller
+include: user/create:withCCAndPaypal
+ccType: Visa
+countryCode: US
+---
+type: sql
+comment: SQL for userId and userGuid
+id: sqlGetUserDetails
+minCount: 1
+sql: |
+  update user_contacts set NAME_FIRST='FRAUD', NAME_LAST='REJECT' where owner_id='{prepareSeller:java.id}'
+---
+id: deleteDuplicateEmailAddressUsers
+type: java
+class: com.stubhub.test.inventory.TNSFraudEvaluationProducerTest
+method: scrubUsersTableForDuplicateEmail
+parameters: 'skarnam@ebay.com'
+---
+id: updateUserEmailAddress
+type: sql
+minCount: 1
+sql: |
+  update stub.users set DEFAULT_EMAIL='skarnam@ebay.com' where ID={prepareSeller:java.id} 
+---
+id: enableFraudEvaluation
+type: java
+verbose: true
+class: "com.stubhub.test.platform.jmx.ConsoleAdapter"
+method: request
+enabled: "{EXPR:!'{ENV}'.startsWith('lvsp')}"
+parameters: 
+  - role: slx
+  - multiBlades: true
+  - action: invokeOp
+  - methodName: 'setProperty'
+  - name: 'inventoryv2-service:name=SHConfig'
+  - methodIndex: 7
+  - arg0: 'tns.listing.evaluation.new.flow.enabled'
+  - arg1: 'true'
+---
+id: createListing
+include: listing/create:normal
+eventId: '{prepareEvent:java}'
+sellerEmail: '{prepareSeller:java.email}'
+sellerPassword: '{prepareSeller:java.password}'
+quantity: 2
+fulfillmentMethod: PDF
+price: '18.5'
+isGA: 'false'
+---

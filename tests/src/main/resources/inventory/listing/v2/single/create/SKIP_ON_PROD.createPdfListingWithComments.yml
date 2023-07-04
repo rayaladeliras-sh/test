@@ -1,0 +1,63 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: Create PDF listing with comments
+comment: "create listing - PDF"
+id: pdf
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:upsEvent:java}'
+    deliveryOption: PDF
+    comments: Obstructed/Limited view
+    internalNotes: This is Test Internal Notes
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SEC{TIMESTAMP}'
+    products:
+      row: R1
+      seat: S1
+response:
+  code: 200
+---
+type: sql
+comment: SQL select comments column tickets table
+verbose: true
+id: selectTicketsTable
+minCount: 1
+username: stub_app
+password: dstub_app
+sql: 'select comments, seller_internal_note from tickets where id=?'
+values: 
+ - '{pdf:response.body.id}'
+rows:
+ -
+  - Obstructed/Limited view
+  - This is Test Internal Notes
+---
+comment: "Get Listing - Valid"
+request:
+  uri: /inventory/listings/v2/{pdf:response.body.id}
+  method: GET
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+  code: 200
+  status: ACTIVE
+  id: '{pdf:response.body.id}'
+  deliveryOption: PDF
+  internalNotes: This is Test Internal Notes

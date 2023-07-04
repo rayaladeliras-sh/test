@@ -1,0 +1,51 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: Update electronic to predelivery without predelivery window
+id: electronicToInstantWithoutPredeliveryWindow
+request:
+ uri: /inventory/listings/v2
+ method: POST
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+ body:
+   eventId: '{static:barcodeEvent:java}'
+   pricePerProduct:
+     amount: 19.0
+     currency: USD
+   section: 'SEC{TIMESTAMP}'
+   deliveryOption: BARCODE
+   products:
+     - row: R9
+       seat: S2
+       productType: ticket
+response:
+ code: 200
+ status: ACTIVE
+---
+id: addBarcodes
+comment: "Update Listing - electronic to instant"
+request:
+ uri: /inventory/listings/v2/{electronicToInstantWithoutPredeliveryWindow:response.body.id}
+ method: PUT
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+ body:
+    products:
+      - row: R9
+        seat: S2
+        productType: ticket
+        fulfillmentArtifact: A121
+        operation: UPDATE
+response:
+ code: 400

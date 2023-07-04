@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<web-app xmlns="http://java.sun.com/xml/ns/javaee"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://java.sun.com/xml/ns/javaee 
+          http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+          version="2.5">
+	<display-name>Inventory Service</display-name>
+	<context-param>
+		<param-name>contextConfigLocation</param-name>
+		<param-value>
+			WEB-INF/cxf-bean.xml,
+			WEB-INF/endpointContext.xml,
+			WEB-INF/messageHandlerContext.xml,
+			WEB-INF/shcache-context.xml,
+			WEB-INF/cacheContext.xml,
+		</param-value>
+	</context-param>
+
+	<context-param>
+  		<param-name>initializeContextOnStartup</param-name>
+  		<param-value>true</param-value>
+  	</context-param>
+
+	<context-param>
+		<param-name>spring.profiles.default</param-name>
+		<param-value>production</param-value>
+	</context-param>
+
+	<context-param>
+		<param-name>spring.profile.active</param-name>
+		<param-value>${spring.profile.active}</param-value>
+	</context-param>
+
+	<filter> <!-- Should always be the first filter. This injects "dye" into ever request for better tracebility -->
+		<filter-name>dyeFilter</filter-name>
+		<filter-class>com.stubhub.newplatform.http.filter.DyeHttpFilter</filter-class>
+	</filter>
+
+    <!-- <filter>
+        <filter-name>securityContextFilter</filter-name>
+        <filter-class>com.stubhub.platform.utilities.webservice.security.ExtendedSecurityContextFilter</filter-class>
+    </filter>
+
+    <filter-mapping>
+        <filter-name>securityContextFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping> -->
+    <filter>
+    <filter-name>filterChainProxy</filter-name>
+    <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+	</filter>
+
+	<filter-mapping>
+	    <filter-name>filterChainProxy</filter-name>
+	    <url-pattern>/*</url-pattern>
+	</filter-mapping>
+
+	<filter-mapping>
+		<filter-name>dyeFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+
+	<listener>
+  		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+  	</listener>
+
+
+	<servlet>
+	    <description>Apache CXF Endpoint</description>
+	    <display-name>CXFServlet</display-name>
+		<servlet-name>CXFServlet</servlet-name>
+		<servlet-class>org.apache.cxf.transport.servlet.CXFServlet</servlet-class>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>CXFServlet</servlet-name>
+		<url-pattern>/*</url-pattern>
+	</servlet-mapping>
+
+</web-app>

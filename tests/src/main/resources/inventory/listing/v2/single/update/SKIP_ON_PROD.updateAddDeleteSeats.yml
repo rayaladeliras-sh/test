@@ -1,0 +1,132 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: Create Listing
+id: createListingAddSeats
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:barcodeEvent:java}'
+    pricePerProduct:
+      amount: 22.0
+      currency: USD
+    section: '{static:randomNum:java}'
+    deliveryOption: BARCODE
+    products:
+      - row: R1
+        seat: S1
+      - row: R1
+        seat: S2
+response:
+  code: 200
+  status: ACTIVE
+---
+comment: "addSeats with duplicateSeats"
+request:
+  uri: /inventory/listings/v2/{createListingAddSeats:response.body.id}
+  method: PUT
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+     products:
+      - row: R1
+        seat: S1
+        productType: TICKET
+response:
+  code: 400
+  id: '{createListingAddSeats:response.body.id}'
+  status: ACTIVE
+  description: Cannot add a seat product that already exists
+---
+comment: "addSeats invalid piggyBackSeats"
+request:
+  uri: /inventory/listings/v2/{createListingAddSeats:response.body.id}
+  method: PUT
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+     products:
+      - row: R2
+        seat: S1
+        productType: TICKET
+response:
+  code: 400
+  id: '{createListingAddSeats:response.body.id}'
+  status: ACTIVE
+---
+comment: "addSeats - piggyback"
+request:
+  uri: /inventory/listings/v2/{createListingAddSeats:response.body.id}
+  method: PUT
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+     products:
+      - row: R2
+        seat: S1
+        productType: TICKET
+      - row: R2
+        seat: S2
+        productType: TICKET
+      - row: LOT
+        seat: Parking Lot
+        productType: PARKING_PASS
+response:
+  code: 200
+  id: '{createListingAddSeats:response.body.id}'
+  status: ACTIVE
+---
+comment: "delete piggyback seat"
+request:
+  uri: /inventory/listings/v2/{createListingAddSeats:response.body.id}
+  method: PUT
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+     products:
+      - row: R2
+        seat: S1
+        productType: TICKET
+        operation: DELETE
+      - row: R2
+        seat: S2
+        productType: TICKET
+        operation: DELETE
+response:
+  code: 200
+  id: '{createListingAddSeats:response.body.id}'
+  status: ACTIVE
+---
+comment: "delete parking pass"
+request:
+  uri: /inventory/listings/v2/{createListingAddSeats:response.body.id}
+  method: PUT
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+     products:
+      - row: Lot
+        seat: Parking Lot
+        productType: PARKING_PASS
+        operation: DELETE
+response:
+  code: 200
+  id: '{createListingAddSeats:response.body.id}'
+  status: ACTIVE

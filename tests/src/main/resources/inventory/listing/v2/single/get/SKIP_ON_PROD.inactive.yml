@@ -1,0 +1,38 @@
+shared: true
+verbose: true
+request:
+  method: GET
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: 'application/json'
+    - Accept: 'application/json'
+---
+sequence: new
+sequenceName: Get listing - INACTIVE
+include: SKIP_ON_PROD.createMinimalListing:createMinimal
+comment: create listing
+eventId: '{static:upsEvent:java}'
+quantity: '1'
+amount: '19.0'
+csrf: '{static:gettoken:response.body.login.csrf_token}'
+cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+---
+include: SKIP_ON_PROD.UpdateListing:updateListing1
+id: update1
+comment: update listing
+listingId: '{createMinimal:response.body.id}'
+status: INACTIVE
+csrf: '{static:gettoken:response.body.login.csrf_token}'
+cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+---
+comment: "Get Listing - All status"
+request:
+  uri: /inventory/listings/v2/{update1:response.body.id}?STATUS=ALL
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+  code: 200
+  status: INACTIVE
+---

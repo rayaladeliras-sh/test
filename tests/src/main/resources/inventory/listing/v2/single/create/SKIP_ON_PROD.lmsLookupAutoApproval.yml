@@ -1,0 +1,140 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: Create LMS listing - Lookup
+id: prepareSeller
+include: user/create:withCCAndPaypal
+ccType: Visa
+countryCode: US
+---
+maxRetries: 3
+id: gettoken
+include: stubhub.iam:web.login
+credentials:
+  username: '{prepareSeller:java.email}'
+  password: '{prepareSeller:java.password}'
+---
+maxRetries: 3
+id: getcookie
+include: stubhub.iam:token.init
+sessionId: '{gettoken:response.body.login.session_id}'
+---
+id: lmsEvent
+include: event/create:byDateRange
+fulfillmentMethod: LMS
+countryCode: US
+startDaysFromNow: 3
+endDaysFromNow: 30
+---
+id: lms1
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{lmsEvent:java}'
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SEC1234'
+    deliveryOption: LMS
+    externalListingId: 'EXT_{TIMESTAMP}_0'
+    products:
+      - row: 'LMS1{TIMESTAMP}'
+        seat: 1
+response:
+  code: 200
+  status: INCOMPLETE
+---
+comment: "Get Listing - Non Trusted Seller"
+request:
+  uri: /inventory/listings/v2/{lms1:response.body.id}
+  method: GET
+  headers:
+    - Cookie: '{getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{gettoken:response.body.login.csrf_token}'
+response:
+  code: 200
+  status: INCOMPLETE
+  id: '{lms1:response.body.id}'
+  lmsApprovalStatus: 1
+---
+type: sql
+comment: update tickets
+verbose: true
+id: updateTicketStatusAndLMSID
+minCount: 1
+sql:   update tickets set system_status = 'ACTIVE',LMS_APPROVAL_STATUS_ID = 2 where id=?
+values:
+  - '{lms1:response.body.id}'
+---
+comment: "Update Listing - Delete"
+request:
+ uri: /inventory/listings/v2/{lms1:response.body.id}
+ method: PUT
+ headers:
+    - Cookie: '{getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{gettoken:response.body.login.csrf_token}'
+ body:
+        status: DELETED
+response:
+ code: 200
+ status: DELETED
+ id: '{lms1:response.body.id}'
+---
+type: java
+verbose: true
+class: java.lang.Thread
+method: sleep
+parameters: 3000
+---
+id: lms2
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{lmsEvent:java}'
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: 'SEC1234'
+    deliveryOption: LMS
+    externalListingId: 'EXT_{TIMESTAMP}_0'
+    products:
+      - row: LMS1
+        seat: 1
+response:
+  code: 200
+  status: INCOMPLETE
+---
+type: java
+verbose: true
+class: java.lang.Thread
+method: sleep
+parameters: 3000
+---
+comment: "Get Listing -  Trusted Seller"
+request:
+  uri: /inventory/listings/v2/{lms2:response.body.id}
+  method: GET
+  headers:
+    - Cookie: '{getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{gettoken:response.body.login.csrf_token}'
+response:
+  code: 200
+  status: ACTIVE
+  id: '{lms2:response.body.id}'
+  lmsApprovalStatus: 2

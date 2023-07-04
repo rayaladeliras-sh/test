@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="producerProperties" class="org.springframework.beans.factory.config.PropertiesFactoryBean">
+        <property name="properties">
+			<props>
+				<prop key="topic.metadata.refresh.interval.ms">${eventMapping.kafka.topic.refresh.interval.rate}</prop>
+				<prop key="message.send.max.retries">${eventMapping.kafka.max.retries}</prop>
+				<prop key="send.buffer.bytes">${eventMapping.kafka.send.buffer.max.bytes.size}</prop>
+				<prop key="queue.buffering.max.ms">${eventMapping.kafka.queue.buffering.max.rate}</prop>
+			</props>        
+		</property>
+    </bean>
+    
+    <bean id ="producerConfiguration"  class="com.stubhub.domain.infrastructure.messaging.client.kafka.ProducerConfiguration">
+        <property name="brokerList" value="${search.app.cdc.kafka.producer.brokerList}"/>
+        <property name="topics">
+            <list>
+                <value>catalog_entity_alias_mappings</value>
+            </list>
+        </property>
+        <property name = "keyEncoder" ref = "stringEncoder"/>
+        <property name = "valueEncoder" ref="stringEncoder"/>
+        <property name = "compressionCodec" value="DEFAULT"/>
+
+    </bean>
+
+    <bean id="kafkaProducerContext" class="com.stubhub.domain.infrastructure.messaging.client.kafka.KafkaProducerContext" lazy-init="true">
+        <property name = "producerProperties" ref= "producerProperties"/>
+        <property name = "producerConfiguration" ref ="producerConfiguration"/>
+    </bean>
+
+ 	<bean id="stringEncoder" class="com.stubhub.domain.infrastructure.messaging.client.kafka.serializer.common.StringEncoder" />
+ 
+</beans>

@@ -1,0 +1,36 @@
+id: event
+country: country
+availableFulfillmentMethod: availableFulfillmentMethod
+barcodeType: barcodeType
+request:
+  method: POST
+  headers:
+    - Accept: application/json
+    - Content-Type: application/json
+  uri: http://slcd000tlk002.stubcorp.com/tds/data/get?environment={ENV}&count=1&dispose=false
+  body:
+    type: Event
+    filters:
+      country: '{:country}'
+      availableFulfillmentMethod: '{:availableFulfillmentMethod}'
+      barcodeType: '{:barcodeType}'
+response:
+  code: 200
+
+---
+id: event1
+country: country
+availableFulfillmentMethod: availableFulfillmentMethod
+request:
+  method: POST
+  headers:
+    - Accept: application/json
+    - Content-Type: application/json
+  uri: http://slcd000tlk002.stubcorp.com/tds/data/get?environment={ENV}&count=1&dispose=false
+  body:
+    type: Event
+    filters:
+      country: '{:country}'
+      availableFulfillmentMethod: '{:availableFulfillmentMethod}'
+response:
+  code: 200

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans
+    xmlns:shcache="http://www.stubhub.com/schema/infrastructure/caching"
+    xmlns:beans="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans 
+           http://www.springframework.org/schema/beans/spring-beans-3.0.xsd 
+           http://www.stubhub.com/schema/infrastructure/caching http://www.stubhub.com/schema/infrastructure/caching/shcache.xsd" >
+           
+  <shcache:l2cache-manager id="L2CacheManager">
+    <shcache:cluster configuration="operationTimeout=${com.stubhub.common.cache.store.couchbase.operationTimeout}"
+                     uri="${com.stubhub.common.cache.store.couchbase.hostNameList}"/>
+    <shcache:default-cache name="L2CACHE">
+      <shcache:expiration ttl="3600"/>
+    </shcache:default-cache>
+    <shcache:l2caches>
+      <shcache:l2cache name="sellerEligibility">
+        <shcache:expiration ttl="3600"/> <!-- 1 Hr -->
+      </shcache:l2cache>
+      <shcache:l2cache name="sellerIdToGuidCache">
+        <shcache:expiration ttl="86400"/> <!-- 24 Hr -->
+      </shcache:l2cache>
+      <shcache:l2cache name="usdToCadCache">
+        <shcache:expiration ttl="86400"/> <!-- 24 Hr -->
+      </shcache:l2cache>
+    </shcache:l2caches>
+</shcache:l2cache-manager>
+
+</beans:beans>

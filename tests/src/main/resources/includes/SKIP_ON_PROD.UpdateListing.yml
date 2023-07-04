@@ -1,0 +1,51 @@
+
+id: updateListing1
+# Minimalistic Listing Creation
+status: status
+listingId: listingId
+csrf: csrf
+cookie: cookie
+# End of Payload Data
+request:
+  method: PUT
+  headers:
+    - Accept: application/json
+    - Content-Type: application/json
+    - X-csrf-Token: '{:csrf}'
+    - Cookie: '{:cookie}'
+  uri: /inventory/listings/v2/{:listingId}
+  body:
+    status: '{:status}'
+
+response:
+  code: 200
+  bodyMatch: contains
+  body:
+    id: '{regexp:[0-9]+}'
+    status: '{:status}'
+
+---
+id: updateListing2
+# Minimalistic Listing Creation
+status: status
+listingId: listingId
+csrf: csrf
+cookie: cookie
+# End of Payload Data
+request:
+  method: PUT
+  headers:
+    - Accept: application/json
+    - Content-Type: application/json
+    - X-csrf-Token: '{:csrf}'
+    - Cookie: '{:cookie}'
+  uri: /inventory/listings/v2/{:listingId}
+  body:
+    status: '{:status}'
+
+response:
+  code: 200
+  bodyMatch: contains
+  body:
+    id: '{regexp:[0-9]+}'
+    status: '{:status}'

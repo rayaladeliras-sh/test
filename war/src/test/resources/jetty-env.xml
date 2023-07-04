@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE Configure PUBLIC "-//Mort Bay Consulting//DTD Configure//EN"
+        "http://jetty.mortbay.org/configure.dtd">
+<Configure class="org.mortbay.jetty.webapp.WebAppContext">
+    <New id="dataSource" class="org.mortbay.jetty.plus.naming.Resource">
+        <Arg>jdbc/apiBatch</Arg>
+        <Arg>
+            <New class="oracle.jdbc.pool.OracleConnectionPoolDataSource">
+                <Set name="URL">jdbc:oracle:thin:@//slcd000dbs003.stubcorp.com:1524/D03QE064</Set>
+                <Set name="user">stub</Set>
+                <Set name="password">dstub</Set>
+            </New>
+        </Arg>
+    </New>
+</Configure>

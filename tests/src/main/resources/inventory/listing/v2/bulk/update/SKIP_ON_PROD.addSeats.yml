@@ -1,0 +1,96 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: update bulk listing - add seats
+id: createListWith2Seats
+request:
+ uri: /inventory/listings/v2
+ method: POST
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+ body:
+   eventId: '{static:upsEvent:java}'
+   section: '{static:randomNum:java}'
+   pricePerProduct:
+     amount: 19.0
+     currency: USD
+   externalListingId: 'EXT_{TIMESTAMP}_1'
+   products:
+     - row: RR1
+       seat: S1
+     - row: RR1
+       seat: S2
+   deliveryOption: UPS
+response:
+ code: 200
+ status: ACTIVE
+---
+id: addSeatsBulkUpdate
+request:
+ uri: /inventory/listings/v2/bulk
+ method: PUT
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+ body:
+  listings:
+     - externalListingId: '{createListWith2Seats:request.body.externalListingId}'
+       products:
+         - row: RR1
+           seat: S3
+         - row: RR1
+           seat: S4
+response:
+ code: 200
+ jobGuid: '{regexp:[0-9]+}'
+---
+type: java
+verbose: true
+class: java.lang.Thread
+method: sleep
+parameters: 30000
+---
+id: updateCallJobService3
+request:
+ uri: /inventory/listings/v2/bulk/{addSeatsBulkUpdate:response.body.jobGuid}
+ method: GET
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+ code: 200
+ jobGuid: '{addSeatsBulkUpdate:response.body.jobGuid}'
+ status: COMPLETED
+ numberOfProcessedListings: 2
+ numberOfInputListings: 2
+---
+comment: "Get Listing - added seats"
+request:
+ uri: /inventory/listings/v2/{createListWith2Seats:response.body.id}
+ method: GET
+ headers:
+   - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+   - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+response:
+ code: 200
+ status: ACTIVE
+ id: '{createListWith2Seats:response.body.id}'
+ quantity: 4
+ products:
+    - row: RR1
+      seat: S1
+    - row: RR1
+      seat: S2
+    - row: RR1
+      seat: S3
+    - row: RR1
+      seat: S4

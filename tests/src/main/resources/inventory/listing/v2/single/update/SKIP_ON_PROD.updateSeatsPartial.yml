@@ -1,0 +1,58 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: https
+  subDomain: api-dev
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: Create Listing
+comment: "Create Listing"
+id: createListingV2
+request:
+  uri: /inventory/listings/v2
+  method: POST
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    eventId: '{static:upsEvent:java}'
+    deliveryOption: UPS
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section: '{static:randomNum:java}'
+    products:
+      - row: R1
+        seat: S1
+        externalId: E1
+        operation: ADD
+        productType: TICKET
+      - row: R1
+        seat: S2
+        externalId: E2
+        operation: ADD
+        productType: TICKET
+response:
+  code: 200
+---
+comment: "Update Seats"
+id: updateSeatsV2
+request:
+  uri: /inventory/listings/v2/{createListingV2:response.body.id}
+  method: PUT
+  headers:
+    - Cookie: '{static:getcookie:response.cookie.SH_UT.raw}'
+    - x-csrf-token: '{static:gettoken:response.body.login.csrf_token}'
+  body:
+    products:
+      row: R1
+      seat: S3
+      externalId: E1
+      operation: UPDATE
+      productType: TICKET
+response:
+  code: 200

@@ -1,0 +1,19 @@
+id: venueMetadata
+csrf: csrf
+cookie: cookie
+venueConfigId: venueConfigId
+request:
+  method: GET
+  subDomain: api-dev
+  headers:
+    - Accept: application/json
+    - Content-Type: application/json
+    - X-csrf-Token: '{:csrf}'
+    - Cookie: '{:cookie}'
+  uri: catalog/venues/v3/venueConfigMetadata?venueConfigId={:venueConfigId}
+response:
+  code: 200
+  bodyMatch: contains
+  body:
+    venueConfigurations[0].seatingZones[0].seatingSections[0].id: '{regexp:[0-9]+}'
+

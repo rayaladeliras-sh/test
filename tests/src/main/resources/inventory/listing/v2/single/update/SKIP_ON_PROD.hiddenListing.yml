@@ -1,0 +1,60 @@
+shared: true
+verbose: true
+request:
+  method: POST
+  scheme: http
+  subDomain: api-int
+  headers:
+    - Content-Type: application/json
+    - Accept: application/json
+---
+sequence: new
+sequenceName: Hidden Listing
+comment: "create hidden listing"
+id: hidden
+request:
+  uri: /inventoryv2/listings/v2
+  method: POST
+  headers:
+    - Authorization: Bearer JYf0azPrf1RAvhUhpGZudVU9bBEa
+    - x-sh-service-context: '{role=R2, operatorId=tb, proxiedId=1000000009}'
+  body:
+    eventId: '{static:upsEvent:java}'
+    deliveryOption: UPS
+    pricePerProduct:
+      amount: 19.0
+      currency: USD
+    section:  'SEC{TIMESTAMP}'
+    status: HIDDEN
+    products:
+      row: R1
+      seat: S1
+response:
+  code: 200
+  status: HIDDEN
+---
+comment: "Activate Listing"
+request:
+  uri: /inventoryv2/listings/v2/{hidden:response.body.id}
+  method: PUT
+  headers:
+    - Authorization: Bearer JYf0azPrf1RAvhUhpGZudVU9bBEa
+    - x-sh-service-context: '{role=R2, operatorId=tb, proxiedId=1000000009}'
+  body:
+    status: ACTIVE
+response:
+  code: 200
+  status: ACTIVE
+---
+comment: "Set the status to hidden"
+request:
+  uri: /inventoryv2/listings/v2/{hidden:response.body.id}
+  method: PUT
+  headers:
+    - Authorization: Bearer JYf0azPrf1RAvhUhpGZudVU9bBEa
+    - x-sh-service-context: '{role=R2, operatorId=tb, proxiedId=1000000009}'
+  body:
+    status: HIDDEN
+response:
+  code: 200
+  status: HIDDEN
